@@ -19,22 +19,22 @@ const callerDepth = 2
 // callersShow sets how many calling functions to show.
 const callersShow = 2
 
-// JError holds our Level and Message data map.
-type JError struct {
+// Error holds our Level and Message data map.
+type Error struct {
 	Level    Level     `json:"level,omitempty"`
 	Time     time.Time `json:"time,omitempty"`
 	Message  string    `json:"message"`
 	Metadata map[string]string
 }
 
-func newError() *JError {
+func newError() *Error {
 	m := make(map[string]string)
-	return &JError{Metadata: m}
+	return &Error{Metadata: m}
 }
 
-// New creates a new JError object and returns it.
+// New creates a new Error object and returns it.
 // args should be in the for of keyString1, valueString1,...
-func New(l Level, msg string, args ...interface{}) *JError {
+func New(l Level, msg string, args ...interface{}) *Error {
 	e := newError()
 	if logTime {
 		e.Time = time.Now()
@@ -54,7 +54,7 @@ func New(l Level, msg string, args ...interface{}) *JError {
 	return e
 }
 
-func (e *JError) Error() string {
+func (e *Error) Error() string {
 	if !logLevel {
 		e.Level = 0
 	}
@@ -63,29 +63,29 @@ func (e *JError) Error() string {
 }
 
 // IsError returns true for anything above WARN
-func (e *JError) IsError() bool {
+func (e *Error) IsError() bool {
 	return e.Level.IsError()
 }
 
 // IsFatal returns true for anything above ERROR
-func (e *JError) IsFatal() bool {
+func (e *Error) IsFatal() bool {
 	return e.Level.IsFatal()
 }
 
 // SetLevel the Level
-func (e *JError) SetLevel(level Level) {
+func (e *Error) SetLevel(level Level) {
 	e.Level = level
 }
 
 // Log logs the error with the appropriate logger type.
-func (e *JError) Log() {
+func (e *Error) Log() {
 	if loggingLevel == e.Level {
 		log.Println(e)
 	}
 }
 
 // Fatal logs and exits as a fatal error.
-func (e *JError) Fatal() {
+func (e *Error) Fatal() {
 	if len(e.Message) > 0 {
 		e.Level = FATAL
 		log.Fatalln(e)
