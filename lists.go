@@ -97,7 +97,7 @@ func (l *List) MarshalArray() []string {
 		msgs := make([]string, 0, i)
 		for _, err := range l.Errors {
 			if err.Level >= loggingLevel {
-				msgs = append(msgs, err.String())
+				msgs = append(msgs, err.Error())
 			}
 		}
 		return msgs

@@ -54,7 +54,7 @@ func New(l Level, msg string, args ...interface{}) Error {
 	return e
 }
 
-func (e *Error) String() string {
+func (e *Error) Error() string {
 	if !logLevel {
 		e.Level = 0
 	}
@@ -80,7 +80,7 @@ func (e *Error) SetLevel(level Level) {
 // Log logs the error with the appropriate logger type.
 func (e *Error) Log() {
 	if loggingLevel == e.Level {
-		log.Println(e.String())
+		log.Println(e)
 	}
 }
 
@@ -88,7 +88,7 @@ func (e *Error) Log() {
 func (e *Error) Fatal() {
 	if len(e.Message) > 0 {
 		e.Level = FATAL
-		log.Fatalln(e.String())
+		log.Fatalln(e)
 	}
 }
 
