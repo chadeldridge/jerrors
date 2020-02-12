@@ -9,21 +9,6 @@ import (
 	"time"
 )
 
-var (
-	logCaller    bool
-	logLevel     bool
-	logTime      bool
-	loggingLevel Level
-)
-
-func init() {
-	// Setup default log options
-	logCaller = true
-	logLevel = true
-	logTime = true
-	loggingLevel = INFO
-}
-
 /*
 callerDepth is how many function calls to step back before getting
 Caller information. This should be enough to get us back to the
@@ -36,48 +21,31 @@ const callersShow = 2
 
 // Error holds our Level and Message data map.
 type Error struct {
-	Level   Level
-	Message map[string]string
+	Level    Level     `json:"level,omitempty"`
+	Time     time.Time `json:"time,omitempty"`
+	Message  string    `json:"message"`
+	Metadata map[string]string
 }
 
 func newError() Error {
-	msg := make(map[string]string)
-	return Error{Message: msg}
-}
-
-// SetOptions for additional error data.
-func SetOptions(options map[string]bool) {
-	for k, v := range options {
-		switch k {
-		case "caller":
-			logCaller = v
-		case "level":
-			logLevel = v
-		case "time":
-			logTime = v
-		}
-	}
-}
-
-// SetLogLevel sets what level to log. Will log set level and above.
-func SetLogLevel(level Level) {
-	loggingLevel = level
+	m := make(map[string]string)
+	return Error{Metadata: m}
 }
 
 // New creates a new Error object and returns it.
 // args should be in the for of keyString1, valueString1,...
-func New(l Level, args ...interface{}) Error {
+func New(l Level, msg string, args ...interface{}) Error {
 	e := newError()
 	if logTime {
-		e.Message["time"] = time.Now().String()
+		e.Time = time.Now()
 	}
 	if logCaller {
-		e.Message["caller"] = getCaller()
+		e.Metadata["caller"] = getCaller()
 	}
 
 	// Convert args to key value pairs
 	for i, arg := range args {
-		e.Message[fmt.Sprint(arg)] = fmt.Sprint(args[i+1])
+		e.Metadata[fmt.Sprint(arg)] = fmt.Sprint(args[i+1])
 		if i+2 >= len(args) {
 			break
 		}
@@ -87,10 +55,10 @@ func New(l Level, args ...interface{}) Error {
 }
 
 func (e *Error) String() string {
-	if logLevel {
-		e.Message["level"] = e.Level.String()
+	if !logLevel {
+		e.Level = 0
 	}
-	j, _ := json.Marshal(e.Message)
+	j, _ := json.Marshal(e)
 	return string(j)
 }
 

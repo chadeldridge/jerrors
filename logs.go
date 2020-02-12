@@ -1,0 +1,35 @@
+package jerrors
+
+var (
+	logCaller    bool
+	logLevel     bool
+	logTime      bool
+	loggingLevel Level
+)
+
+func init() {
+	// Setup default log options
+	logCaller = true
+	logLevel = true
+	logTime = true
+	loggingLevel = INFO
+}
+
+// SetOptions for additional error data.
+func SetOptions(options map[string]bool) {
+	for k, v := range options {
+		switch k {
+		case "caller":
+			logCaller = v
+		case "level":
+			logLevel = v
+		case "time":
+			logTime = v
+		}
+	}
+}
+
+// SetLogLevel sets what level to log. Will log set level and above.
+func SetLogLevel(level Level) {
+	loggingLevel = level
+}
