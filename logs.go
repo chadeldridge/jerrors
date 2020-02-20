@@ -1,5 +1,10 @@
 package jerrors
 
+import (
+	"io"
+	"log"
+)
+
 var (
 	logCaller    bool
 	logLevel     bool
@@ -32,4 +37,9 @@ func SetOptions(options map[string]bool) {
 // SetLogLevel sets what level to log. Will log set level and above.
 func SetLogLevel(level Level) {
 	loggingLevel = level
+}
+
+// SetLogOutput sets the logging destination.
+func SetLogOutput(w io.Writer) {
+	log.SetOutput(w)
 }
