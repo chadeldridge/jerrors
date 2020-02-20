@@ -1,6 +1,10 @@
 package jerrors
 
-import "strings"
+import (
+	"bytes"
+	"encoding/json"
+	"strings"
+)
 
 // Level is an enum
 type Level int
@@ -78,4 +82,24 @@ func (l Level) IsFatal() bool {
 // String converts ErrorLevel value to a string value
 func (l Level) String() string {
 	return LevelStrings[l]
+}
+
+// MarshalJSON converts Level to a json string
+func (l Level) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString(`"`)
+	buffer.WriteString(l.String())
+	buffer.WriteString(`"`)
+	return buffer.Bytes(), nil
+}
+
+// UnmarshalJSON converts a json string to a Level
+func (l *Level) UnmarshalJSON(b []byte) error {
+	var s string
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+
+	*l = StringToLevel(s)
+	return nil
 }

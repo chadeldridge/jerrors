@@ -36,6 +36,9 @@ func newError() *Error {
 // args should be in the for of keyString1, valueString1,...
 func New(l Level, msg string, args ...interface{}) *Error {
 	e := newError()
+	e.Level = l
+	e.Message = msg
+
 	if logTime {
 		e.Time = time.Now()
 	}
@@ -45,6 +48,9 @@ func New(l Level, msg string, args ...interface{}) *Error {
 
 	// Convert args to key value pairs
 	for i, arg := range args {
+		if i%2 != 0 {
+			continue
+		}
 		e.Metadata[fmt.Sprint(arg)] = fmt.Sprint(args[i+1])
 		if i+2 >= len(args) {
 			break
@@ -79,7 +85,7 @@ func (e *Error) SetLevel(level Level) {
 
 // Log logs the error with the appropriate logger type.
 func (e *Error) Log() {
-	if loggingLevel == e.Level {
+	if e.Level >= loggingLevel {
 		log.Println(e)
 	}
 }

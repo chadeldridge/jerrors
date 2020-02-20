@@ -11,7 +11,7 @@ List is a slice of Errors and a Level indicating the most
 critical error level added so far.
 */
 type List struct {
-	Errors []JError
+	Errors []Error
 	Level  Level
 }
 
@@ -39,7 +39,7 @@ func (l *List) SetLevel(level Level) {
 }
 
 // Add an error to the method's List.
-func (l *List) Add(err JError) {
+func (l *List) Add(err Error) {
 	if err.Level != 0 && err.Message != "" {
 		if err.Level > l.Level {
 			l.Level = err.Level
