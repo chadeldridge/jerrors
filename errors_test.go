@@ -49,25 +49,25 @@ func errorIfNotMatchString(t *testing.T, pattern string, s string) {
 	}
 }
 
-func errorIfIsError(t *testing.T, err *Error) {
+func errorIfIsError(t *testing.T, err Error) {
 	if e := err.IsError(); e {
 		t.Errorf("error is (%v) but IsError returned (%v):\n", err.Level, e)
 	}
 }
 
-func errorIfNotIsError(t *testing.T, err *Error) {
+func errorIfNotIsError(t *testing.T, err Error) {
 	if e := err.IsError(); !e {
 		t.Errorf("error is (%v) but IsError returned (%v):\n", err.Level, e)
 	}
 }
 
-func errorIfIsFatal(t *testing.T, err *Error) {
+func errorIfIsFatal(t *testing.T, err Error) {
 	if e := err.IsFatal(); e {
 		t.Errorf("error is (%v) but IsFatal returned (%v):\n", err.Level, e)
 	}
 }
 
-func errorIfNotIsFatal(t *testing.T, err *Error) {
+func errorIfNotIsFatal(t *testing.T, err Error) {
 	if e := err.IsFatal(); !e {
 		t.Errorf("error is (%v) but IsFatal returned (%v):\n", err.Level, e)
 	}
