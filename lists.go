@@ -49,7 +49,7 @@ func (l *List) Add(err Error) {
 	}
 }
 
-// Stack adds the args' List to the top of the method's List
+// Stack adds the args' List to top of the method's List
 func (l *List) Stack(errs List) {
 	if len(errs.Errors) > 0 {
 		// If l is currently empty then overwrite it.

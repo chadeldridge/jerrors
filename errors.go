@@ -27,14 +27,14 @@ type Error struct {
 	Metadata map[string]string
 }
 
-func newError() *Error {
+func newError() Error {
 	m := make(map[string]string)
-	return &Error{Metadata: m}
+	return Error{Metadata: m}
 }
 
 // New creates a new Error object and returns it.
 // args should be in the for of keyString1, valueString1,...
-func New(l Level, msg string, args ...interface{}) *Error {
+func New(l Level, msg string, args ...interface{}) Error {
 	e := newError()
 	e.Level = l
 	e.Message = msg
