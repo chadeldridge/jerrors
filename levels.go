@@ -84,7 +84,7 @@ func (l Level) String() string {
 	return LevelStrings[l]
 }
 
-// MarshalJSON converts Level to a json string
+// MarshalJSON converts Level to json
 func (l Level) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(l.String())
@@ -92,7 +92,7 @@ func (l Level) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// UnmarshalJSON converts a json string to a Level
+// UnmarshalJSON converts json to a Level
 func (l *Level) UnmarshalJSON(b []byte) error {
 	var s string
 	err := json.Unmarshal(b, &s)

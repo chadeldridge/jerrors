@@ -87,28 +87,79 @@ func (l *List) Clear() {
 	l.Errors = nil
 }
 
-// MarshalArray all errors in List into a single json string.
-func (l *List) MarshalArray() []string {
+func (l *List) toArray(enforceLogLevel bool) []Error {
 	switch i := len(l.Errors); i {
 	case 0:
-		msgs := make([]string, 0, 0)
+		msgs := make([]Error, 0, 0)
 		return msgs
 	default:
-		msgs := make([]string, 0, i)
+		msgs := []Error{}
 		for _, err := range l.Errors {
-			if err.Level >= loggingLevel {
-				msgs = append(msgs, err.Error())
+			if enforceLogLevel {
+				if err.Level >= loggingLevel {
+					msgs = append(msgs, err)
+				}
+			} else {
+				msgs = append(msgs, err)
 			}
 		}
 		return msgs
 	}
 }
 
-// Marshal all errors in List into a single json string.
-func (l *List) Marshal() string {
-	msgs := l.MarshalArray()
-	j, _ := json.Marshal(msgs)
+// Error returns all errors in List as a single json string. Returns empty string if failed.
+func (l *List) Error() string {
+	errs := l.toArray(false)
+	if errs == nil {
+		return ""
+	}
+	//m := strings.Join(msgs, "\n")
+	//return m
+	j, _ := json.Marshal(errs)
 	return string(j)
+}
+
+// MarshalJSON converts a List to json.
+func (l *List) MarshalJSON() ([]byte, error) {
+	msgs := l.toArray(false)
+	j, err := json.Marshal(msgs)
+	if err != nil {
+		return nil, err
+	}
+	return j, nil
+}
+
+// UnmarshalJSON converts json to a List.
+func (l *List) UnmarshalJSON(b []byte) error {
+	var a []Error
+	err := json.Unmarshal(b, &a)
+	if err != nil {
+		return err
+	}
+
+	// Figure out how to Unmarshal an error first.
+	return nil
+}
+
+// ToArray returns an array of all marshalled errors in List.
+func (l *List) ToArray() []string {
+	var a []string
+	errs := l.toArray(false)
+	for _, e := range errs {
+		a = append(a, e.Error())
+	}
+	return a
+}
+
+// ToLogArray returns an array of marshalled errors in List.
+// Omits errors below the current logLevel.
+func (l *List) ToLogArray() []string {
+	var a []string
+	errs := l.toArray(true)
+	for _, e := range errs {
+		a = append(a, e.Error())
+	}
+	return a
 }
 
 // Log all messages in the List.
@@ -117,14 +168,12 @@ func (l *List) Log() {
 		return
 	}
 
-	msgs := l.MarshalArray()
+	msgs := l.ToLogArray()
 	log.Print(strings.Join(msgs, "\n"))
 }
 
 // Fatal converts all errors to a single error and runs Fatal to print error and exit(1).
 func (l *List) Fatal() {
-	if l.IsFatal() {
-		msgs := l.MarshalArray()
-		log.Fatal(strings.Join(msgs, "\n"))
-	}
+	msgs := l.ToLogArray()
+	log.Fatal(strings.Join(msgs, "\n"))
 }

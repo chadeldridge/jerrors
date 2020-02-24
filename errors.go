@@ -21,10 +21,10 @@ const callersShow = 2
 
 // Error holds our Level and Message data map.
 type Error struct {
-	Level    Level     `json:"level,omitempty"`
-	Time     time.Time `json:"time,omitempty"`
-	Message  string    `json:"message"`
-	Metadata map[string]string
+	Level    Level             `json:"level,omitempty"`
+	Time     time.Time         `json:"time,omitempty"`
+	Message  string            `json:"message"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 func newError() Error {
