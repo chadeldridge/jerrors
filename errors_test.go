@@ -39,13 +39,13 @@ func getBufferString(buf *bytes.Buffer) string {
 
 func errorIfMatchString(t *testing.T, pattern string, s string) {
 	if m, _ := regexp.MatchString(pattern, s); m {
-		t.Errorf("pattern (%s) found:\n%s", pattern, s)
+		t.Errorf("%s pattern (%s) found: %s", t.Name(), pattern, s)
 	}
 }
 
 func errorIfNotMatchString(t *testing.T, pattern string, s string) {
 	if m, _ := regexp.MatchString(pattern, s); !m {
-		t.Errorf("pattern (%s) not found:\n%s", pattern, s)
+		t.Errorf("%s pattern (%s) not found: %s", t.Name(), pattern, s)
 	}
 }
 
