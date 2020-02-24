@@ -50,7 +50,6 @@ func TestListBasic(t *testing.T) {
 		t.Errorf("list level (%v), expected (%v)\n", errs.Level, ERROR)
 	}
 
-	errs = List{}
 	if hasErrors, count := errs.Check(); !hasErrors {
 		t.Errorf("list Check returned (%v) with (%v) errors, expected (true) and (3)\n", hasErrors, count)
 	}
@@ -135,4 +134,68 @@ func TestListClear(t *testing.T) {
 	if errs.Level != 0 {
 		t.Errorf("list Clear level (%v), expected (0)\n", errs.Level)
 	}
+}
+
+func TestListError(t *testing.T) {
+	opsDefault()
+	var errs List
+	errs.Add(New(DEBUG, "test message 1", "test", "1", "user", "test1"))
+	errs.Add(New(ERROR, "test message 2", "test", "2", "user", "test1"))
+	s := errs.Error()
+	if s == "" {
+		t.Error("list Error returned an empty string\n")
+	}
+	errorIfNotMatchString(t, `"message":"test message 1"`, s)
+	errorIfNotMatchString(t, `"message":"test message 2"`, s)
+}
+
+func TestListToArray(t *testing.T) {
+	opsDefault()
+	var errs List
+	errs.Add(New(DEBUG, "test message 1", "test", "1", "user", "test1"))
+	errs.Add(New(ERROR, "test message 2", "test", "2", "user", "test1"))
+	a := errs.ToArray()
+	if c := len(a); c != 2 {
+		t.Errorf("list ToArray count (%v), expected (2)\n", c)
+	}
+	errorIfNotMatchString(t, `"message":"test message 2"`, a[1])
+}
+
+func TestListToLogArray(t *testing.T) {
+	opsDefault()
+	var errs List
+	errs.Add(New(DEBUG, "test message 1", "test", "1", "user", "test1"))
+	errs.Add(New(ERROR, "test message 2", "test", "2", "user", "test1"))
+	a := errs.ToLogArray()
+	if c := len(a); c != 1 {
+		t.Errorf("list ToArray count (%v), expected (1)\n", c)
+	}
+	errorIfNotMatchString(t, `"message":"test message 2"`, a[0])
+}
+
+func TestListLog(t *testing.T) {
+	opsDefault()
+	var errs List
+	buf := setTestLog()
+	errs.Add(New(DEBUG, "test message 1", "test", "1", "user", "test1"))
+	errs.Add(New(ERROR, "test message 2", "test", "2", "user", "test1"))
+	errs.Log()
+	s := getBufferString(buf)
+	errorIfMatchString(t, `"message":"test message 1"`, s)
+	errorIfNotMatchString(t, `"message":"test message 2"`, s)
+}
+
+func TestListFatal(t *testing.T) {
+	// Unsure how to test this since log.Fatal calls an os.Exist(1)
+	/*
+		opsDefault()
+		var errs List
+		buf := setTestLog()
+		errs.Add(New(DEBUG, "test message 1", "test", "1", "user", "test1"))
+		errs.Add(New(ERROR, "test message 2", "test", "2", "user", "test1"))
+		errs.Fatal()
+		s := getBufferString(buf)
+		errorIfNotMatchString(t, `"message":"test message 1"`, s)
+		errorIfNotMatchString(t, `"message":"test message 2"`, s)
+	*/
 }
