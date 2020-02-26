@@ -18,6 +18,7 @@ func init() {
 	logLevel = true
 	logTime = true
 	loggingLevel = INFO
+	log.SetFlags(0)
 }
 
 // SetOptions for additional error data.
