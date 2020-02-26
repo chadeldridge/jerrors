@@ -61,11 +61,23 @@ func New(l Level, msg string, args ...interface{}) Error {
 }
 
 func (e *Error) Error() string {
+	j, _ := e.MarshalJSON()
+	return string(j)
+}
+
+// MarshalJSON converts Error to a json byte array.
+func (e *Error) MarshalJSON() ([]byte, error) {
 	if !logLevel {
 		e.Level = 0
 	}
 	j, _ := json.Marshal(e)
-	return string(j)
+	return j, nil
+}
+
+// UnmarshalJSON converts a json byte array to an Error.
+func (e *Error) UnmarshalJSON(b []byte) error {
+	err := json.Unmarshal(b, &e)
+	return err
 }
 
 // IsError returns true for anything above WARN
