@@ -29,46 +29,46 @@ import "github.com/chadeldridge/jerrors"
 package main
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/chadeldridge/jerrors"
+    "github.com/chadeldridge/jerrors"
 )
 
 func main() {
-	// Simple error message.
-	err := jerrors.New(jerrors.DEBUG, "a Debug level error message", "type", "test",
-		"user", "testuser")
+    // Simple error message.
+    err := jerrors.New(jerrors.DEBUG, "a Debug level error message", "type", "test",
+        "user", "testuser")
 
-	// Print DEBUG or higher level errors when Log is called. Default is INFO.
-	jerrors.SetLogLevel(jerrors.DEBUG)
-	err.Log()
+    // Print DEBUG or higher level errors when Log is called. Default is INFO.
+    jerrors.SetLogLevel(jerrors.DEBUG)
+    err.Log()
 
-	jerrors.SetLogLevel(jerrors.ERROR)
+    jerrors.SetLogLevel(jerrors.ERROR)
 
-	// Error List
-	var l jerrors.List
-	// l.Level is set to ERROR
-	l.Add(err)
-	// l.Level remains ERROR
-	l.Add(jerrors.New(jerrors.ERROR, "an Error level error message", "type", "test",
-		"app", "testapp1", "user", "testuser"))
-	// l.Level is set to FATAL
-	l.Add(jerrors.New(jerrors.FATAL, "a Fatal error message", "type", "test", "app",
-		"testapp1", "user", "testuser"))
+    // Error List
+    var l jerrors.List
+    // l.Level is set to ERROR
+    l.Add(err)
+    // l.Level remains ERROR
+    l.Add(jerrors.New(jerrors.ERROR, "an Error level error message", "type", "test",
+        "app", "testapp1", "user", "testuser"))
+    // l.Level is set to FATAL
+    l.Add(jerrors.New(jerrors.FATAL, "a Fatal error message", "type", "test", "app",
+        "testapp1", "user", "testuser"))
 
-	if has, count := l.Check(); has {
-		l.Add(jerrors.New(jerrors.DEBUG,
-			fmt.Sprintf("error list contained %v errors", count)))
+    if has, count := l.Check(); has {
+        l.Add(jerrors.New(jerrors.DEBUG,
+            fmt.Sprintf("error list contained %v errors", count)))
 
-		if l.Level == jerrors.FATAL {
-			l.Fatal()
-		} else {
-			l.Log()
-		}
-	}
+        if l.Level == jerrors.FATAL {
+            l.Fatal()
+        } else {
+            l.Log()
+        }
+    }
 }
 ```
-In the below output code the DEBUG level errors in the jerrors.List were not logged because we set the Log Level to ERROR.
+In the below output the DEBUG level errors in the jerrors.List were not logged because we set the Log Level to ERROR.
 ```
 {"time":"2020-02-26T13:11:40.038906297-05:00","level":"debug","message":"a Debug level error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{11}","type":"test","user":"testuser"}}
 {"time":"2020-02-26T13:11:40.039443772-05:00","level":"error","message":"an Error level error message","metadata":{"app":"testapp1","caller":"runtime.main{203}-\u003emain.main{25}","type":"test","user":"testuser"}}
@@ -78,23 +78,26 @@ In the below output code the DEBUG level errors in the jerrors.List were not log
 ## Errors
 ```go
 type Error struct {
-	Time     time.Time         `json:"time,omitempty"`
-	Level    Level             `json:"level,omitempty"`
-	Message  string            `json:"message"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+    Time     time.Time         `json:"time,omitempty"`
+    Level    Level             `json:"level,omitempty"`
+    Message  string            `json:"message"`
+    Metadata map[string]string `json:"metadata,omitempty"`
 }
 ```
 
 ### Creating New Errors
-Error with no added Metadata. By default jerrors always adds the caller func to Metadata.
+Minimal Error with just a Level and Message set. By default jerrors always adds the "caller" to Metadata.
 ```go
 err := jerrors.New(jerrors.ERROR, "simple error message")
+```
+```
+{"time":"2020-02-26T13:11:40.039443772-05:00","level":"error","message":"simple error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{25}"}}
 ```
 
 Error with extra Metadata. Metadata is converted to key:value pairs.
 ```go
 err := jerrors.New(jerrors.ERROR, "simple error message", "add", "metadata",
-	"in", "key", "value", "pairs")
+    "in", "key", "value", "pairs")
 ```
 
 Formatted error messages.
@@ -104,7 +107,7 @@ err := jerrors.New(jerrors.ERROR, fmt.Sprintf("error: %v", e))
 ```
 
 ### Error To string
-jerrors.Error implements the Error interface and can be used in all the same ways.
+jerrors.Error implements the Golang Error interface and can be used in all the same ways.
 ```go
 err := jerrors.New(jerrors.ERROR, "simple error message")
 jsonString := err.Error()
@@ -116,7 +119,7 @@ The Metadata of an Error can be accessed directly as a map[string]string.
 ```go
 err := jerrors.New(jerrors.ERROR, "simple error message", "user", "bob")
 if err.Metadata["user"] == "bob" {
-	fmt.Printf("Why %s?! %v", err.Metadata["user"], err)
+    fmt.Printf("Why %s?! %v", err.Metadata["user"], err)
 }
 ```
 
@@ -126,7 +129,7 @@ if err.Metadata["user"] == "bob" {
 ```go
 err := jerrors.New(jerrors.ERROR, "simple error message")
 if err.Level == jerrors.ERROR {
-	err.Log()
+    err.Log()
 }
 ```
 
@@ -134,7 +137,7 @@ if err.Level == jerrors.ERROR {
 IsError returns true if Error.Level is >= ERROR.
 ```go
 if err.IsError {
-	err.Log()
+    err.Log()
 }
 ```
 
@@ -142,7 +145,7 @@ if err.IsError {
 IsFatal returns true only if Error.Level == FATAL.
 ```go
 if err.IsFatal {
-	err.Fatal()
+    err.Fatal()
 }
 ```
 
