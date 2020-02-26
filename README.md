@@ -58,7 +58,7 @@ func main() {
 ```
 In the below output code the DEBUG level errors in the jerrors.List were not logged because we set the Log Level to ERROR.
 ```
-{"level":"debug","time":"2020-02-26T13:08:34.89221561-05:00","message":"a Debug level error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{11}","type":"test","user":"testuser"}}
-{"level":"error","time":"2020-02-26T13:08:34.89234806-05:00","message":"an Error level error message","metadata":{"app":"testapp1","caller":"runtime.main{203}-\u003emain.main{25}","type":"test","user":"testuser"}}
-{"level":"fatal","time":"2020-02-26T13:08:34.892355994-05:00","message":"a Fatal error message","metadata":{"app":"testapp1","caller":"runtime.main{203}-\u003emain.main{28}","type":"test","user":"testuser"}}
+{"time":"2020-02-26T13:11:40.038906297-05:00","level":"debug","message":"a Debug level error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{11}","type":"test","user":"testuser"}}
+{"time":"2020-02-26T13:11:40.039443772-05:00","level":"error","message":"an Error level error message","metadata":{"app":"testapp1","caller":"runtime.main{203}-\u003emain.main{25}","type":"test","user":"testuser"}}
+{"time":"2020-02-26T13:11:40.039478791-05:00","level":"fatal","message":"a Fatal error message","metadata":{"app":"testapp1","caller":"runtime.main{203}-\u003emain.main{28}","type":"test","user":"testuser"}}
 ```
