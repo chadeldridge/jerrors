@@ -137,7 +137,13 @@ func (l *List) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	// Figure out how to Unmarshal an error first.
+	l.Errors = a
+	for _, e := range a {
+		if e.Level > l.Level {
+			l.Level = e.Level
+		}
+	}
+
 	return nil
 }
 
