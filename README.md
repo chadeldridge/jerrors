@@ -24,7 +24,8 @@ import (
 
 func main() {
 	// Simple error message.
-	err := jerrors.New(jerrors.DEBUG, "a Debug level error message", "type", "test", "user", "testuser")
+	err := jerrors.New(jerrors.DEBUG, "a Debug level error message", "type", "test",
+		"user", "testuser")
 
 	// Print DEBUG or higher level errors when Log is called. Default is INFO.
 	jerrors.SetLogLevel(jerrors.DEBUG)
@@ -34,15 +35,19 @@ func main() {
 
 	// Error List
 	var l jerrors.List
-	l.Add(err)
 	// l.Level is set to ERROR
-	l.Add(jerrors.New(jerrors.ERROR, "an Error level error message", "type", "test", "app", "testapp1", "user", "testuser"))
+	l.Add(err)
 	// l.Level remains ERROR
-	l.Add(jerrors.New(jerrors.FATAL, "a Fatal error message", "type", "test", "app", "testapp1", "user", "testuser"))
+	l.Add(jerrors.New(jerrors.ERROR, "an Error level error message", "type", "test",
+		"app", "testapp1", "user", "testuser"))
 	// l.Level is set to FATAL
+	l.Add(jerrors.New(jerrors.FATAL, "a Fatal error message", "type", "test", "app",
+		"testapp1", "user", "testuser"))
 
 	if has, count := l.Check(); has {
-		l.Add(jerrors.New(jerrors.DEBUG, fmt.Sprintf("error list contained %v errors", count), "type", "test", "app", "testapp1", "user", "testuser"))
+		l.Add(jerrors.New(jerrors.DEBUG,
+			fmt.Sprintf("error list contained %v errors", count)))
+
 		if l.Level == jerrors.FATAL {
 			l.Fatal()
 		} else {
