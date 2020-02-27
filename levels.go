@@ -22,8 +22,7 @@ const (
 	FATAL
 )
 
-// LevelStrings is a slice of our ErrorLevel enum
-var LevelStrings = map[Level]string{
+var levelStrings = map[Level]string{
 	DEBUG: "debug",
 	INFO:  "info",
 	WARN:  "warn",
@@ -31,7 +30,8 @@ var LevelStrings = map[Level]string{
 	FATAL: "fatal",
 }
 
-// StringToLevel returns the match Level. "warn" = WARN
+// StringToLevel returns the match Level. "debug" = DEBUG
+// level arg is NOT case sensitive. No match returns 0.
 func StringToLevel(level string) Level {
 	switch l := strings.ToLower(level); l {
 	case "debug":
@@ -49,42 +49,40 @@ func StringToLevel(level string) Level {
 	}
 }
 
-// NotDebug returns true for all Levels except DEBUG
-func (l Level) NotDebug() bool {
-	switch l {
-	case DEBUG:
-		return false
-	default:
-		return true
-	}
-}
-
-// IsError returns true for ERROR or FATAL
-func (l Level) IsError() bool {
-	switch l {
-	case ERROR, FATAL:
-		return true
-	default:
-		return false
-	}
-}
-
-// IsFatal returns true for anything above ERROR
-func (l Level) IsFatal() bool {
-	switch l {
-	case FATAL:
-		return true
-	default:
-		return false
-	}
-}
-
-// String converts ErrorLevel value to a string value
+// String converts Level to a lowercase string. DEBUG = "debug", etc.
+// Returns empty string if Level is 0.
 func (l Level) String() string {
-	return LevelStrings[l]
+	if val, ok := levelStrings[l]; ok {
+		return val
+	}
+	return ""
 }
 
-// MarshalJSON converts Level to json
+// NotDebug returns true for all Levels except DEBUG.
+func (l Level) NotDebug() bool {
+	if l > 1 {
+		return true
+	}
+	return false
+}
+
+// IsError returns true if Level is ERROR or FATAL.
+func (l Level) IsError() bool {
+	if l >= 4 {
+		return true
+	}
+	return false
+}
+
+// IsFatal returns true if Level is FATAL.
+func (l Level) IsFatal() bool {
+	if l == FATAL {
+		return true
+	}
+	return false
+}
+
+// MarshalJSON converts Level to json.
 func (l Level) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(l.String())
@@ -92,7 +90,7 @@ func (l Level) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// UnmarshalJSON converts json to a Level
+// UnmarshalJSON converts json to a Level.
 func (l *Level) UnmarshalJSON(b []byte) error {
 	var s string
 	err := json.Unmarshal(b, &s)
