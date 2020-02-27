@@ -7,11 +7,14 @@ A simple golang Error module for creating errors and lists of errors in a JSON f
   - [Contents](#contents)
   - [Quick Start](#quick-start)
   - [Errors](#errors)
-  - [Creating New Error](#creating-new-errors)
+    - [Creating New Error](#creating-new-errors)
     - [Error To String](#error-to-string)
     - [Accessing Metadata](#accessing-metadata)
     - [Checking Error Levels](#checking-error-levels)
     - [Error Logging](#error-logging)
+  - [Levels](#levels)
+    - [Level Definition](#level-definition)
+	- [Level Functions](#level-functions)
 
 ## Installation
 To install jerrors you must first has [Go](https://golang.org/) installed and setup.
@@ -124,6 +127,7 @@ if err.Metadata["user"] == "bob" {
 ```
 
 ### Checking Error Levels
+ See [Levels](#levels) for details on jerrors.Level.
 
 #### Direct Comparison
 ```go
@@ -152,7 +156,7 @@ if err.IsFatal {
 ### Error Logging
 
 #### Error.Log()
-An Error can be logged directly by calling Error.Log(). By default Log() will print to STDERR.
+An Error can be logged directly by calling Error.Log(). By default Log() will print to os.Stderr.
 ```go
 err := jerrors.New(jerrors.ERROR, "simple error message")
 err.Log()
@@ -171,4 +175,63 @@ err.Fatal()
 Output
 ```
 {"time":"2020-02-26T13:11:40.038906297-05:00","level":"fatal","message":"simple error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{11}"}}
+```
+
+## Levels
+The Levels enum is used to implement a standardization on error level hierarchy.
+
+### Level Definition
+
+```go
+const (
+	DEBUG Level = iota + 1
+	INFO
+	WARN
+	ERROR
+	FATAL
+)
+```
+
+A Level of 0 is the nil value. Levels can be compared with normal mathimatical operators.
+```go
+l := jerrors.ERROR
+l == jerrors.ERROR // true
+l >  jerrors.DEBUG // true
+l >= jerrors.FATAL // false
+```
+
+Levels string representation.
+```go
+	DEBUG: "debug",
+	INFO:  "info",
+	WARN:  "warn",
+	ERROR: "error",
+	FATAL: "fatal",
+```
+
+### Level Functions
+```go
+
+// StringToLevel returns the matched Level. "debug" = DEBUG
+// level arg is NOT case sensitive. No match returns 0.
+func StringToLevel(level string) Level
+
+// String converts Level to a lowercase string. DEBUG = "debug", etc.
+// Returns empty string if Level is 0.
+func (l Level) String() string
+
+// NotDebug returns true for all Levels except DEBUG.
+func (l Level) NotDebug() bool
+
+// IsError returns true if Level is ERROR or FATAL.
+func (l Level) IsError() bool
+
+// IsFatal returns true if Level is FATAL.
+func (l Level) IsFatal() bool
+
+// MarshalJSON converts Level to json.
+func (l Level) MarshalJSON() ([]byte, error)
+
+// UnmarshalJSON converts json to a Level.
+func (l *Level) UnmarshalJSON(b []byte) error
 ```
