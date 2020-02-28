@@ -253,7 +253,7 @@ type List struct {
 	Level  Level   `json:"level"`
 }
 ```
-A List holds an array of Errors and a Level. The Level is the most critical Level of any error added to the List with List.Add.
+A List holds an array of Errors and an Error Level. The Level is the most critical Level of any Error added to the List with List.Add.
 
 ```go
 var l jerrors.List
@@ -270,7 +270,7 @@ fmt.Println(l.Level) // Prints: error
 ### Checking List Levels
 
 #### Check Function
-List.Check looks to see if any Errors exist and returns a bool and the number of errors in List.Errors.
+List.Check looks to see if any Errors exist. Returns bool and the number of errors in List.Errors.
 ```go
 var l List
 l.Add(jerrors.New(jerrors.DEBUG, "some helpful message"))
