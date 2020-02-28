@@ -14,7 +14,16 @@ A simple golang Error module for creating errors and lists of errors in a JSON f
     - [Error Logging](#error-logging)
   - [Levels](#levels)
     - [Level Definition](#level-definition)
-	- [Level Functions](#level-functions)
+    - [Level Functions](#level-functions)
+  - [Lists](#lists)
+    - [Checking List Levels](#checking-list-levels)
+    - [List Manipulation](#list-manipulation)
+    - [List Conversions](#list-conversions)
+    - [List Logging](#list-logging)
+  - [Logs](#logs)
+    - [Logging Options](#logging-options)
+    - [Logging Level](#logging-level)
+    - [Log Output](#log-output)
 
 ## Installation
 To install jerrors you must first has [Go](https://golang.org/) installed and setup.
@@ -244,7 +253,7 @@ type List struct {
 	Level  Level   `json:"level"`
 }
 ```
-A List simply holds an array of Errors and a Level. The Level is the most critical Level of any error added to the List with List.Add.
+A List holds an array of Errors and a Level. The Level is the most critical Level of any error added to the List with List.Add.
 
 ```go
 var l jerrors.List
@@ -258,7 +267,7 @@ l.Add(jerrors.New(jerrors.WARN, "some warning message"))
 fmt.Println(l.Level) // Prints: error
 ```
 
-### Checking Lists
+### Checking List Levels
 
 #### Check Function
 List.Check looks to see if any Errors exist and returns a bool and the number of errors in List.Errors.
@@ -425,4 +434,65 @@ l.Log()
 Output:
 ```
 {"time":"2020-02-28T13:31:20.453088284-05:00","level":"error","message":"some error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{13}"}}
+```
+
+## Logs
+
+### Logging Options
+SetLogOptions takes in a map[string]bool of options. Current available options.
+"caller" - Determines if "caller" should be included in Metadata. Other Metadata will still be logged if any exists. Defaults to true.
+"level" - Determines if the Error Level should be included when logging an Error. Defaults to true.
+"time" - Determines if Time should be included when logging an Error.
+
+```go
+ops := map[string]bool{"caller": false, "time": false}
+jerrors.SetLogOptions(ops)
+
+var l jerrors.List
+l.Add(jerrors.New(jerrors.ERROR, "some error message", "type", "test"))
+l.Log()
+```
+Output:
+```
+{"level":"error","message":"some error message","metadata":{"type":"test"}}
+```
+
+### Logging Level
+The Logging Level determine what should get logged when calling Log() or Fatal on both Error and List. Log/Fatal will log all Errors with a Level >= the current Log Level.
+You can use SetLogLevel to change the Logging Level. Defaults to INFO.
+
+```go
+var l jerrors.List
+l.Add(jerrors.New(jerrors.DEBUG, "some helpful message"))
+l.Add(jerrors.New(jerrors.ERROR, "some error message", "type", "test"))
+
+fmt.Println("Default Log Level: INFO")
+l.Log()
+
+jerrors.SetLogLevel(jerrors.DEBUG)
+fmt.Println("\nLog Level: DEBUG")
+l.Log()
+```
+
+Output:
+```
+Default Log Level: INFO
+{"time":"2020-02-28T14:39:47.067940286-05:00","level":"error","message":"some error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{12}","type":"test"}}
+
+Log Level: DEBUG
+{"time":"2020-02-28T14:39:47.067920642-05:00","level":"debug","message":"some helpful message","metadata":{"caller":"runtime.main{203}-\u003emain.main{11}"}}
+{"time":"2020-02-28T14:39:47.067940286-05:00","level":"error","message":"some error message","metadata":{"caller":"runtime.main{203}-\u003emain.main{12}","type":"test"}}
+```
+
+### Log Output
+Use SetLogOutput to repoint 'log' to output to a different io.Writer. This can be os.Stdout, a buffer, or any other io.Writer.
+```go
+var l jerrors.List
+l.Add(jerrors.New(jerrors.ERROR, "some error message", "type", "test"))
+buf := new(bytes.Buffer)
+jerrors.SetLogOutput(buf)
+l.Log()
+
+line := buf.String()
+fmt.Print(line)
 ```
