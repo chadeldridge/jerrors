@@ -11,8 +11,19 @@ List is a slice of Errors and a Level indicating the most
 critical error level added so far.
 */
 type List struct {
-	Errors []Error
-	Level  Level
+	Errors []Error `json:"errors"`
+	Level  Level   `json:"level"`
+}
+
+// Add an error to the method's List.
+func (l *List) Add(err Error) {
+	if err.Level != 0 && err.Message != "" {
+		if err.Level > l.Level {
+			l.Level = err.Level
+		}
+		//l.Errors = append([]Error{err}, l.Errors...)
+		l.Errors = append(l.Errors, err)
+	}
 }
 
 // Check return true if errors exist and the number of errors present.
@@ -36,17 +47,6 @@ func (l *List) IsFatal() bool {
 // SetLevel the Level
 func (l *List) SetLevel(level Level) {
 	l.Level = level
-}
-
-// Add an error to the method's List.
-func (l *List) Add(err Error) {
-	if err.Level != 0 && err.Message != "" {
-		if err.Level > l.Level {
-			l.Level = err.Level
-		}
-		//l.Errors = append([]Error{err}, l.Errors...)
-		l.Errors = append(l.Errors, err)
-	}
 }
 
 // Stack adds the args' List to top of the method's List
@@ -109,43 +109,48 @@ func (l *List) toArray(enforceLogLevel bool) []Error {
 
 // Error returns all errors in List as a single json string. Returns empty string if failed.
 func (l *List) Error() string {
-	errs := l.toArray(false)
-	if errs == nil {
-		return ""
-	}
-	//m := strings.Join(msgs, "\n")
-	//return m
-	j, _ := json.Marshal(errs)
-	return string(j)
-}
-
-// MarshalJSON converts a List to json.
-func (l *List) MarshalJSON() ([]byte, error) {
 	msgs := l.toArray(false)
 	j, err := json.Marshal(msgs)
 	if err != nil {
-		return nil, err
+		return ""
 	}
-	return j, nil
+	return string(j)
+}
+
+// String is an alternate method name for List.Error().
+func (l *List) String() string {
+	return l.Error()
+}
+
+/*
+// MarshalJSON converts a List to json.
+func (l *List) MarshalJSON() ([]byte, error) {
+		msgs := l.toArray(false)
+		j, err := json.Marshal(msgs)
+		if err != nil {
+			return nil, err
+		}
+		return j, nil
 }
 
 // UnmarshalJSON converts json to a List.
 func (l *List) UnmarshalJSON(b []byte) error {
-	var a []Error
-	err := json.Unmarshal(b, &a)
-	if err != nil {
-		return err
-	}
-
-	l.Errors = a
-	for _, e := range a {
-		if e.Level > l.Level {
-			l.Level = e.Level
+		var a []Error
+		err := json.Unmarshal(b, &a)
+		if err != nil {
+			return err
 		}
-	}
 
-	return nil
+		l.Errors = a
+		for _, e := range a {
+			if e.Level > l.Level {
+				l.Level = e.Level
+			}
+		}
+
+		return nil
 }
+*/
 
 // ToArray returns an array of all marshalled errors in List.
 func (l *List) ToArray() []string {
