@@ -162,7 +162,7 @@ func TestNewErrorNoTime(t *testing.T) {
 	if err.Metadata["user"] != "test1" {
 		t.Errorf("error metadata 'user' (%v), expected (test1)", err.Message)
 	}
-	if !err.Time.IsZero() {
+	if err.Time != nil {
 		t.Errorf("error time (%v), expected zero time", err.Time)
 	}
 }

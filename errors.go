@@ -62,7 +62,10 @@ func New(l Level, msg string, args ...interface{}) Error {
 }
 
 func (e *Error) Error() string {
-	//j, _ := e.MarshalJSON()
+	if !logLevel {
+		e.Level = 0
+	}
+
 	j, _ := json.Marshal(e)
 	return string(j)
 }
