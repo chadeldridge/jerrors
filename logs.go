@@ -21,8 +21,8 @@ func init() {
 	log.SetFlags(0)
 }
 
-// SetOptions for additional error data.
-func SetOptions(options map[string]bool) {
+// SetLogOptions for additional error data.
+func SetLogOptions(options map[string]bool) {
 	for k, v := range options {
 		switch k {
 		case "caller":

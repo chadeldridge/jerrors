@@ -9,7 +9,7 @@ import (
 )
 
 func ops(logCaller, logLevel, logTime bool, level Level) {
-	SetOptions(map[string]bool{
+	SetLogOptions(map[string]bool{
 		"caller": logCaller,
 		"level":  logLevel,
 		"time":   logTime,
