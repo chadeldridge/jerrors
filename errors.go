@@ -21,7 +21,7 @@ const callersShow = 2
 
 // Error holds our Level and Message data map.
 type Error struct {
-	Time     time.Time         `json:"time,omitempty"`
+	Time     *time.Time        `json:"time,omitempty"`
 	Level    Level             `json:"level,omitempty"`
 	Message  string            `json:"message"`
 	Metadata map[string]string `json:"metadata,omitempty"`
@@ -40,7 +40,8 @@ func New(l Level, msg string, args ...interface{}) Error {
 	e.Message = msg
 
 	if logTime {
-		e.Time = time.Now()
+		t := time.Now()
+		e.Time = &t
 	}
 	if logCaller {
 		e.Metadata["caller"] = getCaller()
