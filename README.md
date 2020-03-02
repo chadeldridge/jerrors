@@ -1,9 +1,9 @@
-# jerrors JSON Error Framework
+# jerrors Go JSON Error Framework
 A simple golang Error module for creating errors and lists of errors in a JSON format.
 
 
 ## Contents
-- [jerrors JSON Error Framework](#jerrors-json-error-framework)
+- [jerrors](#jerrors-go-json-error-framework)
   - [Contents](#contents)
   - [Quick Start](#quick-start)
   - [Errors](#errors)
