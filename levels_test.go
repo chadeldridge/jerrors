@@ -1,106 +1,73 @@
 package jerrors
 
-import "testing"
+import (
+	"fmt"
+	"testing"
 
-func errorIfNotLevelNotDebug(t *testing.T, l Level) {
-	if b := l.NotDebug(); !b {
-		t.Errorf("level is (%v) but NotDebug returned (%v):\n", l, b)
-	}
+	"github.com/stretchr/testify/require"
+)
+
+func testErrorMarshalJSON(t *testing.T, level Level) {
+	expect := []byte(fmt.Sprintf("\"%s\"", level.String()))
+	b, err := level.MarshalJSON()
+	require.Nil(t, err, fmt.Sprintf("got error for MarshalJSON(): %s", err))
+	require.NotEmpty(t, b)
+	require.Equal(t, expect, b)
 }
 
-func errorIfLevelIsError(t *testing.T, l Level) {
-	if b := l.IsError(); b {
-		t.Errorf("level is (%v) but IsError returned (%v):\n", l, b)
-	}
+func testErrorUnmarshalJSON(t *testing.T, expect Level, j string) {
+	var l Level
+	err := l.UnmarshalJSON([]byte(j))
+	require.Nil(t, err, fmt.Sprintf("got error for UnmarshalJSON(): %s", err))
+	require.NotEqual(t, 0, l)
+	require.Equal(t, expect, l)
 }
 
-func errorIfNotLevelIsError(t *testing.T, l Level) {
-	if b := l.IsError(); !b {
-		t.Errorf("level is (%v) but IsError returned (%v):\n", l, b)
-	}
+func TestLevelsDebug(t *testing.T) {
+	require.False(t, DEBUG.NotDebug())
+	require.True(t, INFO.NotDebug())
+	require.True(t, WARN.NotDebug())
+	require.True(t, ERROR.NotDebug())
+	require.True(t, FATAL.NotDebug())
 }
 
-func errorIfLevelIsFatal(t *testing.T, l Level) {
-	if b := l.IsFatal(); b {
-		t.Errorf("level is (%v) but IsFatal returned (%v):\n", l, b)
-	}
+func TestLevelsIsError(t *testing.T) {
+	require.False(t, DEBUG.IsError())
+	require.False(t, INFO.IsError())
+	require.False(t, WARN.IsError())
+	require.True(t, ERROR.IsError())
+	require.True(t, FATAL.IsError())
 }
 
-func TestLevelNotDebug(t *testing.T) {
-	if b := DEBUG.NotDebug(); b {
-		t.Errorf("level is (%v) but NotDebug returned (%v):\n", DEBUG, b)
-	}
-	errorIfNotLevelNotDebug(t, INFO)
-	errorIfNotLevelNotDebug(t, WARN)
-	errorIfNotLevelNotDebug(t, ERROR)
-	errorIfNotLevelNotDebug(t, FATAL)
+func TestLevelsIsFatal(t *testing.T) {
+	require.False(t, DEBUG.IsFatal())
+	require.False(t, INFO.IsFatal())
+	require.False(t, WARN.IsFatal())
+	require.False(t, ERROR.IsFatal())
+	require.True(t, FATAL.IsFatal())
 }
 
-func TestLevelIsError(t *testing.T) {
-	errorIfLevelIsError(t, DEBUG)
-	errorIfLevelIsError(t, INFO)
-	errorIfLevelIsError(t, WARN)
-	errorIfNotLevelIsError(t, ERROR)
-	errorIfNotLevelIsError(t, FATAL)
+// TestLevelsString also tests Error() since String() calls Error()
+func TestLevelsString(t *testing.T) {
+	require.Equal(t, "debug", DEBUG.String())
+	require.Equal(t, "info", INFO.String())
+	require.Equal(t, "warn", WARN.String())
+	require.Equal(t, "error", ERROR.String())
+	require.Equal(t, "fatal", FATAL.String())
 }
 
-func TestLevelIsFatal(t *testing.T) {
-	errorIfLevelIsFatal(t, DEBUG)
-	errorIfLevelIsFatal(t, INFO)
-	errorIfLevelIsFatal(t, WARN)
-	errorIfLevelIsFatal(t, ERROR)
-	if b := FATAL.IsFatal(); !b {
-		t.Errorf("level is (%v) but NotDebug returned (%v):\n", DEBUG, b)
-	}
+func TestLevelsMarshalJSON(t *testing.T) {
+	testErrorMarshalJSON(t, DEBUG)
+	testErrorMarshalJSON(t, INFO)
+	testErrorMarshalJSON(t, WARN)
+	testErrorMarshalJSON(t, ERROR)
+	testErrorMarshalJSON(t, FATAL)
 }
 
-func TestLevelString(t *testing.T) {
-	s := ERROR.String()
-	if s == "" {
-		t.Error("level is (error) but String returned empty\n")
-		return
-	}
-	if s != "error" {
-		t.Errorf("level is (error) but String returned (%v):\n", s)
-	}
-}
-
-func TestLevelMarshalJSON(t *testing.T) {
-	b, err := ERROR.MarshalJSON()
-	if err != nil {
-		t.Errorf("level MarshalJSON returned error: %v\n", err)
-		return
-	}
-	if len(b) == 0 {
-		t.Error("level is (\"error\") but MarshalJSON returned empty\n")
-		return
-	}
-	s := string(b)
-	if s != `"error"` {
-		t.Errorf("level is (\"error\") but String returned (%v):\n", s)
-	}
-}
-
-func TestLevelUnmarshalJSON(t *testing.T) {
-	l := ERROR
-	b, err := l.MarshalJSON()
-	if err != nil {
-		t.Errorf("level MarshalJSON returned error: %v\n", err)
-		return
-	}
-	if len(b) == 0 {
-		t.Error("level is (\"error\") but MarshalJSON returned empty\n")
-		return
-	}
-
-	// Clear level so we know if it gets updated during unmarshal.
-	l = 0
-	err = l.UnmarshalJSON(b)
-	if err != nil {
-		t.Errorf("level UnmarshalJSON returned error: %v\n", err)
-		return
-	}
-	if l != ERROR {
-		t.Errorf("level UnmarshalJSON is (%v), expected (%v):\n", l, ERROR)
-	}
+func TestLevelsUnmarshalJSON(t *testing.T) {
+	testErrorUnmarshalJSON(t, DEBUG, `"debug"`)
+	testErrorUnmarshalJSON(t, INFO, `"info"`)
+	testErrorUnmarshalJSON(t, WARN, `"warn"`)
+	testErrorUnmarshalJSON(t, ERROR, `"error"`)
+	testErrorUnmarshalJSON(t, FATAL, `"fatal"`)
 }
