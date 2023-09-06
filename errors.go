@@ -2,132 +2,198 @@ package jerrors
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
-	"runtime"
 	"strings"
-	"time"
 )
 
-/*
-callerDepth is how many function calls to step back before getting
-Caller information. This should be enough to get us back to the
-initiating function.
-*/
-const callerDepth = 2
-
-// callersShow sets how many calling functions to show.
-const callersShow = 2
-
-// Error holds our Level and Message data map.
-type Error struct {
-	Time     *time.Time        `json:"time,omitempty"`
-	Level    Level             `json:"level,omitempty"`
-	Message  string            `json:"message"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+// Errors is a slice of Errors and with Level showing the highest error level added.
+type Errors struct {
+	Errors []Error `json:"errors"`
+	Level  Level   `json:"level"`
 }
 
-func newError() Error {
-	m := make(map[string]string)
-	return Error{Metadata: m}
+func New() Errors {
+	return Errors{
+		Errors: []Error{},
+		Level:  0,
+	}
 }
 
-// New creates a new Error object and returns it.
-// args should be in the for of keyString1, valueString1,...
-func New(l Level, msg string, args ...interface{}) Error {
-	e := newError()
-	e.Level = l
-	e.Message = msg
+// New creates a new Error and adds it to the List.
+func (e *Errors) NewError(level Level, msg string, args ...interface{}) {
+	e.Add(NewError(level, msg, args...))
+}
 
-	if logTime {
-		t := time.Now()
-		e.Time = &t
-	}
-	if logCaller {
-		e.Metadata["caller"] = getCaller()
+// Add an error to the method's List.
+func (e *Errors) Add(err Error) {
+	if err.Level > e.Level {
+		e.Level = err.Level
 	}
 
-	// Convert args to key value pairs
-	for i, arg := range args {
-		if i%2 != 0 {
-			continue
+	e.Errors = append(e.Errors, err)
+}
+
+// Check if List is not empty and return the number of Errors.
+func (e *Errors) Check() (int, bool) {
+	if l := len(e.Errors); l > 0 {
+		return l, true
+	}
+
+	return 0, false
+}
+
+// IsError returns true for anything above WARN
+func (e *Errors) IsError() bool { return e.Level.IsError() }
+
+// IsFatal returns true for anything above ERROR
+func (e *Errors) IsFatal() bool { return e.Level.IsFatal() }
+
+// SetLevel overrides the Level of the List
+func (e *Errors) SetLevel(level Level) { e.Level = level }
+
+// String is an alternate method name for List.Error().
+func (e *Errors) String() string { return e.Error() }
+
+// Clear the List and Levee.
+func (e *Errors) Clear() { *e = New() }
+
+// Stack adds the args' List to top of the method's List
+func (e *Errors) Stack(errs Errors) {
+	if len(errs.Errors) < 1 {
+		return
+	}
+
+	// If l is currently empty then overwrite it.
+	if len(e.Errors) == 0 {
+		e.Level = errs.Level
+		e.Errors = errs.Errors
+		return
+	}
+
+	if errs.Level > e.Level {
+		e.Level = errs.Level
+	}
+
+	e.Errors = append(errs.Errors, e.Errors...)
+}
+
+// Append the arg List to the method's List.
+func (e *Errors) Append(errs Errors) {
+	if len(errs.Errors) < 1 {
+		return
+	}
+
+	// If l is currently empty then overwrite it.
+	if len(e.Errors) == 0 {
+		e.Level = errs.Level
+		e.Errors = errs.Errors
+		return
+	}
+
+	if errs.Level > e.Level {
+		e.Level = errs.Level
+	}
+
+	e.Errors = append(e.Errors, errs.Errors...)
+}
+
+func (e *Errors) toArray(enforceLogLevel bool) []Error {
+	switch i := len(e.Errors); i {
+	case 0:
+		return []Error{}
+	default:
+		msgs := []Error{}
+		for _, err := range e.Errors {
+			if !enforceLogLevel && err.Level < config.LoggingLevel {
+				continue
+			}
+
+			msgs = append(msgs, err)
 		}
-		e.Metadata[fmt.Sprint(arg)] = fmt.Sprint(args[i+1])
-		if i+2 >= len(args) {
-			break
-		}
+		return msgs
 	}
-
-	return e
 }
 
-func (e *Error) Error() string {
-	if !logLevel {
-		e.Level = 0
+// Error returns all errors in List as a single json string. Returns empty string if failed.
+func (e *Errors) Error() string {
+	msgs := e.toArray(false)
+	j, err := json.Marshal(msgs)
+	if err != nil {
+		return ""
 	}
 
-	j, _ := json.Marshal(e)
 	return string(j)
 }
 
 /*
-// MarshalJSON converts Error to a json byte array.
-func (e *Error) MarshalJSON() ([]byte, error) {
-	if !logLevel {
-		e.Level = 0
+// MarshalJSON converts a List to json.
+func (e *Errors) MarshalJSON() ([]byte, error) {
+	msgs := e.toArray(false)
+	j, err := json.Marshal(msgs)
+	if err != nil {
+		return nil, err
 	}
-	j, _ := json.Marshal(e)
+
 	return j, nil
+}
+
+// UnmarshalJSON converts json to a List.
+func (e *Errors) UnmarshalJSON(b []byte) error {
+	var a []Error
+
+	r := json.Unmarshal(b, &a)
+	if r != nil {
+		return r
+	}
+
+	e.Errors = a
+	for _, err := range a {
+		if err.Level > e.Level {
+			e.Level = err.Level
+		}
+	}
+
+	return nil
 }
 */
 
-// UnmarshalJSON converts a json byte array to an Error.
-func (e *Error) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &e)
-	return err
-}
+// ToArray returns an array of all marshalled errors in List.
+func (e *Errors) ToArray() []string {
+	var a []string
 
-// IsError returns true for anything above WARN
-func (e *Error) IsError() bool {
-	return e.Level.IsError()
-}
-
-// IsFatal returns true for anything above ERROR
-func (e *Error) IsFatal() bool {
-	return e.Level.IsFatal()
-}
-
-// SetLevel the Level
-func (e *Error) SetLevel(level Level) {
-	e.Level = level
-}
-
-// Log logs the error with the appropriate logger type.
-func (e *Error) Log() {
-	if e.Level >= loggingLevel {
-		log.Println(e)
+	errs := e.toArray(false)
+	for _, e := range errs {
+		a = append(a, e.Error())
 	}
+
+	return a
 }
 
-// Fatal logs and exits as a fatal error.
-func (e *Error) Fatal() {
-	if len(e.Message) > 0 {
-		e.Level = FATAL
-		log.Fatalln(e)
+// ToLogArray returns an array of marshalled errors in List.
+// Omits errors below the current logLevee.
+func (e *Errors) ToLogArray() []string {
+	var a []string
+
+	errs := e.toArray(true)
+	for _, e := range errs {
+		a = append(a, e.Error())
 	}
+
+	return a
 }
 
-func getCaller() string {
-	callers := make([]uintptr, 0, callersShow)
-	for i := callerDepth; i <= callerDepth+callersShow; i++ {
-		c, _, _, _ := runtime.Caller(i)
-		callers = append(callers, c)
+// Log all messages in the List.
+func (e *Errors) Log() {
+	if len(e.Errors) == 0 {
+		return
 	}
-	frames := runtime.CallersFrames(callers)
-	s := make([]string, 0, callersShow)
-	for i := 0; i < callersShow; i++ {
-		f, _ := frames.Next()
-		s = append([]string{fmt.Sprintf("%s{%d}", f.Function, f.Line)}, s...)
-	}
-	return strings.Join(s, "->")
+
+	msgs := e.ToLogArray()
+	log.Print(strings.Join(msgs, "\n"))
+}
+
+// Fatal converts all errors to a single error and runs Fatal to print error and exit(1).
+func (e *Errors) Fatal() {
+	msgs := e.ToLogArray()
+	log.Fatal(strings.Join(msgs, "\n"))
 }

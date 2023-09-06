@@ -1,255 +1,162 @@
 package jerrors
 
 import (
-	"bytes"
-	"regexp"
-	"strconv"
+	"strings"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
-func ops(logCaller, logLevel, logTime bool, level Level) {
-	SetLogOptions(map[string]bool{
-		"caller": logCaller,
-		"level":  logLevel,
-		"time":   logTime,
-	})
-	SetLogLevel(level)
+func TestErrors(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
+
+	errs := New()
+	errs.NewError(WARN, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
+	require.Equal(t, 1, len(errs.Errors))
+	require.Equal(t, WARN, errs.Level)
+
+	// errs.Level should remain WARN
+	errs.Add(debugErr)
+	require.Equal(t, 2, len(errs.Errors))
+	require.Equal(t, WARN, errs.Level)
+
+	// errs.Level should change to ERROR
+	errs.Add(errorErr)
+	require.Equal(t, 3, len(errs.Errors))
+	require.Equal(t, ERROR, errs.Level)
 }
 
-func opsDefault() {
-	ops(true, true, true, INFO)
+func TestErrorsCheck(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
+
+	errs := New()
+	errs.Add(debugErr)
+	errCount, hasErrors := errs.Check()
+	require.Equal(t, 1, errCount)
+	require.True(t, hasErrors)
 }
 
-func setTestLog() *bytes.Buffer {
-	buf := new(bytes.Buffer)
-	SetLogOutput(buf)
-	return buf
+func TestErrorsIsError(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
+
+	errs := New()
+	errs.Add(debugErr)
+	require.False(t, errs.IsError())
+
+	errs.Add(infoErr)
+	require.False(t, errs.IsError())
+
+	errs.Add(warnErr)
+	require.False(t, errs.IsError())
+
+	errs.Add(errorErr)
+	require.True(t, errs.IsError())
+
+	errs.Add(fatalErr)
+	require.True(t, errs.IsError())
 }
 
-func getBufferString(buf *bytes.Buffer) string {
-	line := buf.String()
-	if len(line) == 0 {
-		return ""
-	}
+func TestErrorsIsFatal(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
 
-	line = line[0 : len(line)-1]
-	return line
+	errs := New()
+	errs.Add(debugErr)
+	require.False(t, errs.IsFatal())
+
+	errs.Add(infoErr)
+	require.False(t, errs.IsFatal())
+
+	errs.Add(warnErr)
+	require.False(t, errs.IsFatal())
+
+	errs.Add(errorErr)
+	require.False(t, errs.IsFatal())
+
+	errs.Add(fatalErr)
+	require.True(t, errs.IsFatal())
 }
 
-func errorIfMatchString(t *testing.T, pattern string, s string) {
-	if m, _ := regexp.MatchString(pattern, s); m {
-		t.Errorf("%s pattern (%s) found: %s", t.Name(), pattern, s)
-	}
+func TestErrorsString(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
+
+	errs := New()
+	errs.Add(debugErr)
+	errs.Add(errorErr)
+	s := errs.String()
+	require.NotEmpty(t, s)
 }
 
-func errorIfNotMatchString(t *testing.T, pattern string, s string) {
-	if m, _ := regexp.MatchString(pattern, s); !m {
-		t.Errorf("%s pattern (%s) not found: %s", t.Name(), pattern, s)
-	}
+func TestErrorsStack(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
+
+	errs := New()
+	errs.Add(debugErr)
+	errs.Add(infoErr)
+
+	errs2 := New()
+	errs2.Add(warnErr)
+	errs2.Add(errorErr)
+
+	errs.Stack(errs2)
+	require.Equal(t, 4, len(errs.Errors))
+	require.Equal(t, WARN, errs.Errors[0].Level)
+	require.Equal(t, ERROR, errs.Errors[1].Level)
+	require.Equal(t, DEBUG, errs.Errors[2].Level)
+	require.Equal(t, INFO, errs.Errors[3].Level)
 }
 
-func errorIfIsError(t *testing.T, err Error) {
-	if e := err.IsError(); e {
-		t.Errorf("error is (%v) but IsError returned (%v):\n", err.Level, e)
-	}
+func TestErrorsAppend(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
+
+	errs := New()
+	errs.Add(debugErr)
+	errs.Add(infoErr)
+
+	errs2 := New()
+	errs2.Add(warnErr)
+	errs2.Add(errorErr)
+
+	errs.Append(errs2)
+	require.Equal(t, DEBUG, errs.Errors[0].Level)
+	require.Equal(t, INFO, errs.Errors[1].Level)
+	require.Equal(t, WARN, errs.Errors[2].Level)
+	require.Equal(t, ERROR, errs.Errors[3].Level)
 }
 
-func errorIfNotIsError(t *testing.T, err Error) {
-	if e := err.IsError(); !e {
-		t.Errorf("error is (%v) but IsError returned (%v):\n", err.Level, e)
-	}
+func TestErrorsToArray(t *testing.T) {
+	c := NewConfig()
+	c.LoggingLevel = DEBUG
+	c.SetConfig()
+
+	errs := New()
+	errs.Add(debugErr)
+	errs.Add(infoErr)
+	errs.Add(warnErr)
+	errs.Add(errorErr)
+	errs.Add(fatalErr)
+
+	a := errs.ToArray()
+	require.Equal(t, 5, len(a))
+	require.True(t, strings.Contains(a[0], "debug"))
+	require.True(t, strings.Contains(a[4], "fatal"))
 }
 
-func errorIfIsFatal(t *testing.T, err Error) {
-	if e := err.IsFatal(); e {
-		t.Errorf("error is (%v) but IsFatal returned (%v):\n", err.Level, e)
-	}
-}
+func TestErrorsClear(t *testing.T) {
+	c := DefaultConfig()
+	c.SetConfig()
 
-func errorIfNotIsFatal(t *testing.T, err Error) {
-	if e := err.IsFatal(); !e {
-		t.Errorf("error is (%v) but IsFatal returned (%v):\n", err.Level, e)
-	}
-}
+	var errs Errors
+	errs.Add(errorErr)
+	errs.Add(fatalErr)
+	require.Equal(t, 2, len(errs.Errors))
 
-func TestNewError(t *testing.T) {
-	opsDefault()
-	err := New(ERROR, "test error", "type", "test", "user", "test1")
-	if err.Level != ERROR {
-		t.Errorf("error level (%v), expected (%v)", err.Level, ERROR)
-	}
-	if err.Message != "test error" {
-		t.Errorf("error message (%v), expected (test error)", err.Message)
-	}
-	if err.Metadata["caller"] == "" {
-		t.Error("error metadata 'caller' is blank")
-	}
-	if err.Metadata["type"] != "test" {
-		t.Errorf("error metadata 'type' (%v), expected (test)", err.Message)
-	}
-	if err.Metadata["user"] != "test1" {
-		t.Errorf("error metadata 'user' (%v), expected (test1)", err.Message)
-	}
-	if err.Time.IsZero() {
-		t.Errorf("error time (%v), expected non zero time", err.Time)
-	}
-}
-
-func TestNewErrorNoCaller(t *testing.T) {
-	ops(false, true, true, INFO)
-	err := New(ERROR, "test error", "type", "test", "user", "test1")
-	if err.Level != ERROR {
-		t.Errorf("error level (%v), expected (%v)", err.Level, ERROR)
-	}
-	if err.Message != "test error" {
-		t.Errorf("error message (%v), expected (test error)", err.Message)
-	}
-	if err.Metadata["caller"] != "" {
-		t.Error("error metadata 'caller' exists")
-	}
-	if err.Metadata["type"] != "test" {
-		t.Errorf("error metadata 'type' (%v), expected (test)", err.Message)
-	}
-	if err.Metadata["user"] != "test1" {
-		t.Errorf("error metadata 'user' (%v), expected (test1)", err.Message)
-	}
-	if err.Time.IsZero() {
-		t.Errorf("error time (%v), expected non zero time", err.Time)
-	}
-}
-
-func TestNewErrorNoLevel(t *testing.T) {
-	ops(true, false, true, INFO)
-	err := New(ERROR, "test error", "type", "test", "user", "test1")
-	if err.Level != ERROR {
-		t.Errorf("error level (%v), expected (%v)", err.Level, ERROR)
-	}
-	if err.Message != "test error" {
-		t.Errorf("error message (%v), expected (test error)", err.Message)
-	}
-	if err.Metadata["caller"] == "" {
-		t.Error("error metadata 'caller' is blank")
-	}
-	if err.Metadata["type"] != "test" {
-		t.Errorf("error metadata 'type' (%v), expected (test)", err.Message)
-	}
-	if err.Metadata["user"] != "test1" {
-		t.Errorf("error metadata 'user' (%v), expected (test1)", err.Message)
-	}
-	if err.Time.IsZero() {
-		t.Errorf("error time (%v), expected non zero time", err.Time)
-	}
-	s := err.Error()
-	errorIfMatchString(t, `"level"`, s)
-}
-
-func TestNewErrorNoTime(t *testing.T) {
-	ops(true, true, false, INFO)
-	err := New(ERROR, "test error", "type", "test", "user", "test1")
-	if err.Level != ERROR {
-		t.Errorf("error level (%v), expected (%v)", err.Level, ERROR)
-	}
-	if err.Message != "test error" {
-		t.Errorf("error message (%v), expected (test error)", err.Message)
-	}
-	if err.Metadata["caller"] == "" {
-		t.Error("error metadata 'caller' is blank")
-	}
-	if err.Metadata["type"] != "test" {
-		t.Errorf("error metadata 'type' (%v), expected (test)", err.Message)
-	}
-	if err.Metadata["user"] != "test1" {
-		t.Errorf("error metadata 'user' (%v), expected (test1)", err.Message)
-	}
-	if err.Time != nil {
-		t.Errorf("error time (%v), expected zero time", err.Time)
-	}
-}
-
-func TestErrorLog(t *testing.T) {
-	opsDefault()
-	buf := setTestLog()
-	err := New(ERROR, "test error", "type", "test", "user", "test1")
-	err.Log()
-	s := getBufferString(buf)
-	errorIfNotMatchString(t, `"level":"`+err.Level.String()+`"`, s)
-	errorIfNotMatchString(t, `"message":"test error"`, s)
-	errorIfNotMatchString(t, `"caller":"[a-zA-Z]+`, s)
-	errorIfNotMatchString(t, `"type":"test"`, s)
-	errorIfNotMatchString(t, `"user":"test1"`, s)
-	errorIfNotMatchString(t, `"time":"`+strconv.Itoa(time.Now().Year()), s)
-}
-
-func TestErrorLogNoLevel(t *testing.T) {
-	ops(true, false, true, INFO)
-	buf := setTestLog()
-	err := New(ERROR, "test error", "type", "test", "user", "test1")
-	err.Log()
-	s := getBufferString(buf)
-	errorIfMatchString(t, `"level":"`+err.Level.String()+`"`, s)
-	errorIfNotMatchString(t, `"message":"test error"`, s)
-	errorIfNotMatchString(t, `"caller":"[a-zA-Z]+`, s)
-	errorIfNotMatchString(t, `"type":"test"`, s)
-	errorIfNotMatchString(t, `"user":"test1"`, s)
-	errorIfNotMatchString(t, `"time":"`+strconv.Itoa(time.Now().Year()), s)
-}
-
-func TestErrorLogCorrectLevel(t *testing.T) {
-	ops(true, true, true, INFO)
-	buf := setTestLog()
-	err := New(DEBUG, "test error", "type", "test", "user", "test1")
-	err.Log()
-	s := getBufferString(buf)
-	if s != "" {
-		t.Errorf("error logged at level(%v), logLevel set at (%v):\n%s", ERROR, INFO, s)
-	}
-}
-
-func TestErrorSetLevel(t *testing.T) {
-	opsDefault()
-	err := New(DEBUG, "test error", "type", "test", "user", "test1")
-	if err.Level != DEBUG {
-		t.Errorf("error level (%v), expected (%v)", err.Level, DEBUG)
-	}
-	err.SetLevel(ERROR)
-	if err.Level != ERROR {
-		t.Errorf("error level (%v), expected (%v)", err.Level, ERROR)
-	}
-}
-
-func TestErrorIsError(t *testing.T) {
-	opsDefault()
-	err := New(DEBUG, "test error", "type", "test", "user", "test1")
-	errorIfIsError(t, err)
-
-	err.SetLevel(INFO)
-	errorIfIsError(t, err)
-
-	err.SetLevel(WARN)
-	errorIfIsError(t, err)
-
-	err.SetLevel(ERROR)
-	errorIfNotIsError(t, err)
-
-	err.SetLevel(FATAL)
-	errorIfNotIsError(t, err)
-}
-
-func TestErrorIsFatal(t *testing.T) {
-	opsDefault()
-	err := New(DEBUG, "test error", "type", "test", "user", "test1")
-	errorIfIsFatal(t, err)
-
-	err.SetLevel(INFO)
-	errorIfIsFatal(t, err)
-
-	err.SetLevel(WARN)
-	errorIfIsFatal(t, err)
-
-	err.SetLevel(ERROR)
-	errorIfIsFatal(t, err)
-
-	err.SetLevel(FATAL)
-	errorIfNotIsFatal(t, err)
+	errs.Clear()
+	require.Equal(t, 0, len(errs.Errors))
 }

@@ -22,17 +22,8 @@ const (
 	FATAL
 )
 
-var levelStrings = map[Level]string{
-	DEBUG: "debug",
-	INFO:  "info",
-	WARN:  "warn",
-	ERROR: "error",
-	FATAL: "fatal",
-}
-
-// StringToLevel returns the match Level. "debug" = DEBUG
-// level arg is NOT case sensitive. No match returns 0.
-func StringToLevel(level string) Level {
+// GetLevel returns the matching Level. "debug" = DEBUG. level arg is NOT case sensitive. No match returns 0.
+func GetLevel(level string) Level {
 	switch l := strings.ToLower(level); l {
 	case "debug":
 		return DEBUG
@@ -49,38 +40,26 @@ func StringToLevel(level string) Level {
 	}
 }
 
-// String converts Level to a lowercase string. DEBUG = "debug", etc.
-// Returns empty string if Level is 0.
+// String returns Level as a lowercase string. DEBUG = "debug"
 func (l Level) String() string {
-	if val, ok := levelStrings[l]; ok {
-		return val
-	}
-	return ""
+	return []string{
+		"",
+		"debug",
+		"info",
+		"warn",
+		"error",
+		"fatal",
+	}[l]
 }
 
-// NotDebug returns true for all Levels except DEBUG.
-func (l Level) NotDebug() bool {
-	if l > 1 {
-		return true
-	}
-	return false
-}
+// NotDebug returns true if the provided Level is any Level except DEBUG.
+func (l Level) NotDebug() bool { return l > DEBUG }
 
-// IsError returns true if Level is ERROR or FATAL.
-func (l Level) IsError() bool {
-	if l >= 4 {
-		return true
-	}
-	return false
-}
+// IsError returns true if Level is ERROR or higher.
+func (l Level) IsError() bool { return l >= ERROR }
 
-// IsFatal returns true if Level is FATAL.
-func (l Level) IsFatal() bool {
-	if l == FATAL {
-		return true
-	}
-	return false
-}
+// IsFatal returns true if Level is FATAL or higher.
+func (l Level) IsFatal() bool { return l >= FATAL }
 
 // MarshalJSON converts Level to json.
 func (l Level) MarshalJSON() ([]byte, error) {
@@ -98,6 +77,6 @@ func (l *Level) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*l = StringToLevel(s)
+	*l = GetLevel(s)
 	return nil
 }
