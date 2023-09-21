@@ -1,6 +1,7 @@
 # jerrors Go JSON Error Framework
 A simple golang Error module for creating errors and lists of errors in a JSON format.
 
+# THIS DOCUMENTATION IS OUT OF DATE AND WILL BE UPDATED SOON - 2023-09-21
 
 ## Contents
 - [jerrors](#jerrors-go-json-error-framework)
