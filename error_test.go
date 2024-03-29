@@ -20,8 +20,7 @@ var (
 )
 
 func TestError(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	err := NewError(ERROR, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
 	require.Equal(t, err.Level, ERROR)
@@ -36,7 +35,7 @@ func TestError(t *testing.T) {
 func TestErrorWithCaller(t *testing.T) {
 	c := DefaultConfig()
 	c.LogCaller = true
-	c.SetConfig()
+	SetConfig(c)
 
 	err := NewError(ERROR, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
 	require.Equal(t, err.Level, ERROR)
@@ -52,7 +51,7 @@ func TestErrorWithCaller(t *testing.T) {
 func TestErrorNoLevel(t *testing.T) {
 	c := DefaultConfig()
 	c.LogLevel = false
-	c.SetConfig()
+	SetConfig(c)
 
 	err := NewError(ERROR, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
 	require.Equal(t, err.Message, testMessage)
@@ -69,7 +68,7 @@ func TestErrorNoLevel(t *testing.T) {
 func TestErrorNoTime(t *testing.T) {
 	c := DefaultConfig()
 	c.LogTime = false
-	c.SetConfig()
+	SetConfig(c)
 
 	err := NewError(ERROR, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
 	require.Equal(t, err.Level, ERROR)
@@ -82,8 +81,7 @@ func TestErrorNoTime(t *testing.T) {
 }
 
 func TestErrorChangeFields(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	err := NewError(ERROR, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
 	// Verify our defaults are correct
@@ -108,8 +106,7 @@ func TestErrorChangeFields(t *testing.T) {
 }
 
 func TestErrorIsError(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	err := debugErr
 	require.False(t, err.IsError())
@@ -128,8 +125,7 @@ func TestErrorIsError(t *testing.T) {
 }
 
 func TestErrorIsFatal(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	err := debugErr
 	require.False(t, err.IsFatal())

@@ -8,8 +8,7 @@ import (
 )
 
 func TestErrors(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.NewError(WARN, testMessage, mdTypeKey, mdTypeVal, mdUserKey, mdUserVal)
@@ -28,8 +27,7 @@ func TestErrors(t *testing.T) {
 }
 
 func TestErrorsCheck(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.Add(debugErr)
@@ -39,8 +37,7 @@ func TestErrorsCheck(t *testing.T) {
 }
 
 func TestErrorsIsError(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.Add(debugErr)
@@ -60,8 +57,7 @@ func TestErrorsIsError(t *testing.T) {
 }
 
 func TestErrorsIsFatal(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.Add(debugErr)
@@ -81,8 +77,7 @@ func TestErrorsIsFatal(t *testing.T) {
 }
 
 func TestErrorsString(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.Add(debugErr)
@@ -92,8 +87,7 @@ func TestErrorsString(t *testing.T) {
 }
 
 func TestErrorsStack(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.Add(debugErr)
@@ -112,8 +106,7 @@ func TestErrorsStack(t *testing.T) {
 }
 
 func TestErrorsAppend(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	errs := New()
 	errs.Add(debugErr)
@@ -133,7 +126,7 @@ func TestErrorsAppend(t *testing.T) {
 func TestErrorsToArray(t *testing.T) {
 	c := NewConfig()
 	c.LoggingLevel = DEBUG
-	c.SetConfig()
+	SetConfig(c)
 
 	errs := New()
 	errs.Add(debugErr)
@@ -149,8 +142,7 @@ func TestErrorsToArray(t *testing.T) {
 }
 
 func TestErrorsClear(t *testing.T) {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 
 	var errs Errors
 	errs.Add(errorErr)

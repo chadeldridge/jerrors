@@ -3,8 +3,7 @@ package jerrors
 var config Config
 
 func init() {
-	c := DefaultConfig()
-	c.SetConfig()
+	SetConfig(DefaultConfig())
 }
 
 type Config struct {
@@ -18,6 +17,8 @@ type Config struct {
 	// CallersToShow sets how many calling functions to show.
 	CallersToShow int
 }
+
+func GetConfig() Config { return config }
 
 func NewConfig() Config {
 	return DefaultConfig()
@@ -34,10 +35,10 @@ func DefaultConfig() Config {
 	}
 }
 
-func (c *Config) SetConfig() {
-	if c.LoggingLevel == 0 {
-		c.LoggingLevel = INFO
+func SetConfig(newConfig Config) {
+	if newConfig.LoggingLevel == 0 {
+		newConfig.LoggingLevel = INFO
 	}
 
-	config = *c
+	config = newConfig
 }
