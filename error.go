@@ -24,9 +24,9 @@ func newError() Error {
 
 // NewError creates a new Error object and returns it.
 // args should be in the for of keyString1, valueString1,...
-func NewError(l Level, msg string, args ...interface{}) Error {
+func NewError(level Level, msg string, args ...interface{}) Error {
 	e := newError()
-	e.Level = l
+	e.Level = level
 	e.Message = msg
 
 	if config.LogTime {
