@@ -33,7 +33,7 @@ func (e *Errors) Add(err Error) {
 	e.Errors = append(e.Errors, err)
 }
 
-// Check if List is not empty and return the number of Errors.
+// Check if Errors is not empty and return the number of Errors.
 func (e *Errors) Check() (int, bool) {
 	if l := len(e.Errors); l > 0 {
 		return l, true
@@ -41,6 +41,9 @@ func (e *Errors) Check() (int, bool) {
 
 	return 0, false
 }
+
+// Last returns the last Error in the Errors List
+func (e *Errors) Last() Error { return e.Errors[len(e.Errors)-1] }
 
 // IsError returns true for anything above WARN
 func (e *Errors) IsError() bool { return e.Level.IsError() }
@@ -51,19 +54,19 @@ func (e *Errors) IsFatal() bool { return e.Level.IsFatal() }
 // SetLevel overrides the Level of the List
 func (e *Errors) SetLevel(level Level) { e.Level = level }
 
-// String is an alternate method name for List.Error().
+// String is an alternate method name for List.Error()
 func (e *Errors) String() string { return e.Error() }
 
-// Clear the List and Levee.
+// Clear the List and Level
 func (e *Errors) Clear() { *e = New() }
 
-// Stack adds the args' List to top of the method's List
+// Stack adds the arg List to top of the method's List
 func (e *Errors) Stack(errs Errors) {
 	if len(errs.Errors) < 1 {
 		return
 	}
 
-	// If l is currently empty then overwrite it.
+	// If l is currently empty then overwrite it
 	if len(e.Errors) == 0 {
 		e.Level = errs.Level
 		e.Errors = errs.Errors
