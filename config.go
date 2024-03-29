@@ -7,10 +7,14 @@ func init() {
 }
 
 type Config struct {
-	LogLevel     bool
-	LogTime      bool
+	// Record the Level
+	LogLevel bool
+	// Record the timestamp
+	LogTime bool
+	// Minimum Level to log
 	LoggingLevel Level
-	LogCaller    bool
+	// Record the caller details
+	LogCaller bool
 	// CallerDepth is how many function calls to step back before getting Caller information.
 	// This should be enough to get us back to the initiating function.
 	CallerDepth int
@@ -19,10 +23,7 @@ type Config struct {
 }
 
 func GetConfig() Config { return config }
-
-func NewConfig() Config {
-	return DefaultConfig()
-}
+func NewConfig() Config { return DefaultConfig() }
 
 func DefaultConfig() Config {
 	return Config{
