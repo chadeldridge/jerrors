@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"maps"
 	"runtime"
 	"strings"
 	"time"
@@ -17,43 +18,34 @@ type Error struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
-func newError() Error {
-	m := make(map[string]string)
-	return Error{Metadata: m}
-}
-
 // NewError creates a new Error object and returns it.
 // args should be in the for of keyString1, valueString1,...
 func NewError(level Level, msg string, args ...interface{}) Error {
-	e := newError()
+	// Create a base error.
+	e := Error{Metadata: make(map[string]string)}
+
+	// Set the error level and message.
 	e.Level = level
 	e.Message = msg
 
+	// Check if we should log the time.
 	if config.LogTime {
 		t := time.Now()
 		e.Time = &t
 	}
 
+	// Check if we should log the caller.
 	if config.LogCaller {
 		e.Metadata["caller"] = getCaller()
 	}
 
 	// Convert args to key value pairs
-	for i, arg := range args {
-		if i%2 != 0 {
-			continue
-		}
-
-		if i+1 > len(args) {
-			break
-		}
-
-		e.Metadata[fmt.Sprint(arg)] = fmt.Sprint(args[i+1])
-	}
+	e.AddMetadata(args...)
 
 	return e
 }
 
+// Merge converts args into string pairs and adds them to the Error's Metadata.
 func (e *Error) AddMetadata(args ...interface{}) {
 	l := len(args)
 
@@ -61,15 +53,31 @@ func (e *Error) AddMetadata(args ...interface{}) {
 		if i%2 != 0 {
 			continue
 		}
-		if l < i+1 {
+
+		if i+1 == l {
 			return
 		}
 
 		e.Metadata[fmt.Sprint(arg)] = fmt.Sprint(args[i+1])
+
+		// If this was the last key, we're done.
+		if i+2 >= l {
+			return
+		}
 	}
 }
 
-func (e *Error) String() string {
+// Equal returns true if the Error is equal to the given Error. Equal does not compare Time.
+func (e Error) Equal(error Error) bool {
+	if e.Level != error.Level || e.Message != error.Message {
+		return false
+	}
+
+	return maps.Equal(e.Metadata, error.Metadata)
+}
+
+// String returns the string representation of the Error.
+func (e Error) String() string {
 	if !config.LogLevel {
 		e.Level = 0
 	}
@@ -78,7 +86,8 @@ func (e *Error) String() string {
 	return string(j)
 }
 
-func (e *Error) Error() string {
+// Error returns the string representation of the Error.
+func (e Error) Error() string {
 	return e.String()
 }
 
@@ -94,10 +103,12 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 */
 
 // UnmarshalJSON converts a json byte array to an Error.
+/*
 func (e *Error) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &e)
+	err := json.Unmarshal(b, e)
 	return err
 }
+*/
 
 // IsError returns true for anything above WARN
 func (e *Error) IsError() bool {
