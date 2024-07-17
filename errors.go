@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var ErrNoErrorFound = NewError(0, "No error found")
+
 // Errors is a slice of Errors and with Level showing the highest error level added.
 type Errors struct {
 	Errors []Error `json:"errors"`
@@ -33,6 +35,31 @@ func (e *Errors) Add(err Error) {
 	e.Errors = append(e.Errors, err)
 }
 
+func (e *Errors) Remove(error Error) bool {
+	for i, err := range e.Errors {
+		if err.Equal(error) {
+			e.Errors = append(e.Errors[:i], e.Errors[i+1:]...)
+			e.UpdateLevel()
+			return true
+		}
+	}
+
+	return false
+}
+
+// UpdateLevel sets Errors.Level the the highest one in the Errors list and returns Errors.Level.
+func (e *Errors) UpdateLevel() Level {
+	var l Level
+	for _, err := range e.Errors {
+		if err.Level > l {
+			l = err.Level
+		}
+	}
+
+	e.Level = l
+	return e.Level
+}
+
 // Check if Errors is not empty and return the number of Errors.
 func (e *Errors) Check() (int, bool) {
 	if l := len(e.Errors); l > 0 {
@@ -42,8 +69,27 @@ func (e *Errors) Check() (int, bool) {
 	return 0, false
 }
 
-// Last returns the last Error in the Errors List
-func (e *Errors) Last() Error { return e.Errors[len(e.Errors)-1] }
+// First returns the first (e.Errors[0]) Error in the Errors List. Reutnrs ErrNoErrorFound if
+// Errors.Errors is empt. ErrNoErrorFound = NewError(0, "No errors found")
+func (e *Errors) First() Error {
+	if len(e.Errors) == 0 {
+		return ErrNoErrorFound
+	}
+
+	return e.Errors[0]
+}
+
+// Last returns the last Error in the Errors List. Returns ErrNoErrorFound if Errors.Errors is empty.
+func (e *Errors) Last() Error {
+	if len(e.Errors) == 0 {
+		return ErrNoErrorFound
+	}
+
+	return e.Errors[len(e.Errors)-1]
+}
+
+// IsEmpty checks to see if Errors.Errors is empty.
+func (e *Errors) IsEmpty() bool { return len(e.Errors) == 0 }
 
 // IsError returns true for anything above WARN
 func (e *Errors) IsError() bool { return e.Level.IsError() }
@@ -62,7 +108,7 @@ func (e *Errors) Clear() { *e = New() }
 
 // Stack adds the arg List to top of the method's List
 func (e *Errors) Stack(errs Errors) {
-	if len(errs.Errors) < 1 {
+	if len(errs.Errors) == 0 {
 		return
 	}
 
@@ -82,7 +128,7 @@ func (e *Errors) Stack(errs Errors) {
 
 // Append the arg List to the method's List.
 func (e *Errors) Append(errs Errors) {
-	if len(errs.Errors) < 1 {
+	if len(errs.Errors) == 0 {
 		return
 	}
 
@@ -196,7 +242,7 @@ func (e *Errors) Log() {
 }
 
 // Fatal converts all errors to a single error and runs Fatal to print error and exit(1).
-func (e *Errors) Fatal() {
+func (e *Errors) Fatal(msg string) {
 	msgs := e.ToLogArray()
-	log.Fatal(strings.Join(msgs, "\n"))
+	log.Fatal(msg + strings.Join(msgs, "\n"))
 }
