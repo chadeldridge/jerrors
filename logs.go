@@ -3,6 +3,7 @@ package jerrors
 import (
 	"io"
 	"log"
+	"os"
 )
 
 func init() {
@@ -11,6 +12,13 @@ func init() {
 }
 
 // SetLogOutput sets the logging destination.
+// Example:
+// var buf bytes.Buffer
+// log.SetOutput(&buf)
 func SetLogOutput(w io.Writer) {
+	if w == nil {
+		log.SetOutput(os.Stderr)
+		return
+	}
 	log.SetOutput(w)
 }
