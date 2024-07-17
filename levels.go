@@ -1,7 +1,6 @@
 package jerrors
 
 import (
-	"bytes"
 	"encoding/json"
 	"strings"
 )
@@ -63,10 +62,7 @@ func (l Level) IsFatal() bool { return l >= FATAL }
 
 // MarshalJSON converts Level to json.
 func (l Level) MarshalJSON() ([]byte, error) {
-	buffer := bytes.NewBufferString(`"`)
-	buffer.WriteString(l.String())
-	buffer.WriteString(`"`)
-	return buffer.Bytes(), nil
+	return json.Marshal(l.String())
 }
 
 // UnmarshalJSON converts json to a Level.
