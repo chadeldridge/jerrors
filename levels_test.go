@@ -23,6 +23,15 @@ func testErrorUnmarshalJSON(t *testing.T, expect Level, j string) {
 	require.Equal(t, expect, l)
 }
 
+func TestLevelsGetLevel(t *testing.T) {
+	require.Equal(t, DEBUG, GetLevel("debug"))
+	require.Equal(t, INFO, GetLevel("info"))
+	require.Equal(t, WARN, GetLevel("warn"))
+	require.Equal(t, ERROR, GetLevel("error"))
+	require.Equal(t, FATAL, GetLevel("fatal"))
+	require.Equal(t, Level(0), GetLevel("invalid"))
+}
+
 func TestLevelsDebug(t *testing.T) {
 	require.False(t, DEBUG.NotDebug())
 	require.True(t, INFO.NotDebug())
@@ -70,4 +79,8 @@ func TestLevelsUnmarshalJSON(t *testing.T) {
 	testErrorUnmarshalJSON(t, WARN, `"warn"`)
 	testErrorUnmarshalJSON(t, ERROR, `"error"`)
 	testErrorUnmarshalJSON(t, FATAL, `"fatal"`)
+
+	var l Level
+	err := l.UnmarshalJSON([]byte(""))
+	require.Error(t, err, fmt.Sprintf("got error for UnmarshalJSON(): %s", err))
 }

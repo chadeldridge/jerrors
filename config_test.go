@@ -34,8 +34,16 @@ func TestSetConfig(t *testing.T) {
 	SetConfig(want)
 
 	got := GetConfig()
-
 	require.Equal(t, want.LogLevel, got.LogLevel)
 	require.Equal(t, want.LogTime, got.LogTime)
 	require.Equal(t, want.LoggingLevel, got.LoggingLevel)
+
+	// No LoggingLevel
+	want.LoggingLevel = 0
+	SetConfig(want)
+
+	got = GetConfig()
+	require.Equal(t, want.LogLevel, got.LogLevel)
+	require.Equal(t, want.LogTime, got.LogTime)
+	require.Equal(t, INFO, got.LoggingLevel)
 }
