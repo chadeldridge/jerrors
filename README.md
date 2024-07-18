@@ -8,7 +8,6 @@ A simple golang Error module for creating errors and lists of errors in a JSON f
 	- [Quick Start](#quick-start)
 	- [Error](#error)
 		- [Creating A Error](#creating-a-error)
-		- [Error To string](#error-to-string)
 		- [Accessing Metadata](#accessing-metadata)
 		- [Checking Error Levels](#checking-error-levels)
 			- [Direct Comparison](#direct-comparison)
@@ -19,7 +18,6 @@ A simple golang Error module for creating errors and lists of errors in a JSON f
 			- [Error.Fatal()](#errorfatal)
 	- [Levels](#levels)
 		- [Level Definition](#level-definition)
-		- [Level Functions](#level-functions)
 	- [Errors](#errors)
 		- [Creating New Errors Errors](#creating-new-errors-errors)
 		- [Adding An Error to Errors](#adding-an-error-to-errors)
@@ -29,7 +27,7 @@ A simple golang Error module for creating errors and lists of errors in a JSON f
 			- [IsError](#iserror-1)
 			- [IsFatal](#isfatal-1)
 		- [Errors Manipulation](#errors-manipulation)
-			- [Append Errorss](#append-errorss)
+			- [Append Errors](#append-errors)
 			- [Stack Errorss](#stack-errorss)
 			- [Clear Errors](#clear-errors)
 		- [Errors Conversions](#errors-conversions)
@@ -58,130 +56,86 @@ import "github.com/chadeldridge/jerrors"
 
 ## Quick Start
 ```go
-package main
-
-import (
-	"log"
-
-	"github.com/chadeldridge/jerrors"
-)
-
-// Do some stuff then return a single error with jerrors.Error
-func DoSomething() jerrors.Error {
-	return jerrors.NewError(jerrors.ERROR, "second test error", "value", 100, "order", 2)
-}
-
-// Do something and return an error list with jerrors.Errors
-func DoSomethingMore() jerrors.Errors {
-	errs := jerrors.NewError()
-
-	// Error can have any number of metadata pairs added to it.
-	errs.NewError(jerrors.WARN, "another test error", "username", "sally", "app", "test_app",
-		"order", 3)
-	errs.NewError(jerrors.FATAL, "something went very wrong", "username", "sally", "app", "test_app",
-		"env", "prod", "order", 4)
-
-	return errs
-}
-
 func main() {
-	errs := jerrors.NewError()
+	// Create a new Errors object to store our errors in.
+	errs := jerrors.New()
 
-	// Create a new Error and add it to errs.
-	errs.NewError(jerrors.DEBUG, "first test error", "username", "billy", "order", 1)
-	// Errors.Level will contain the highest error Level added to Errors
-	log.Printf("errs.Level: %s", errs.Level)
-	// Output:
-	// errs.Level: debug
-	errs.Log()
-	log.Println()
-	// Output:
-	// {"time":"2024-03-29T15:26:10.914361963-04:00","level":"debug","message":"first test error","metadata":{"order":"1","username":"billy"}}
+	// Create some errors.
+	err1 := jerrors.NewError(jerrors.ERROR, "simple error message")
+	err2 := jerrors.NewError(jerrors.WARN, "error message with metadata", "key1", "value1", "key2", "value2")
 
-	err := DoSomething()
-	// Add an existing Error to errs. If the Error.Level is higher than the current
-	// errs.Level then errs.Level = err.Level.
-	errs.Add(err)
-	log.Printf("errs.Level: %s", errs.Level)
-	// Output:
-	// errs.Level: error
-	errs.Log()
-	log.Println()
-	// Output:
-	// {"time":"2024-03-29T15:26:10.914361963-04:00","level":"debug","message":"first test error","metadata":{"order":"1","username":"billy"}}
-	// {"time":"2024-03-29T15:26:10.914534246-04:00","level":"error","message":"second test error","metadata":{"order":"2","value":"100"}}
+	// Add the errors to the Errors object.
+	errs.Add(err1)
+	errs.Add(err2)
 
-	newErrs := DoSomethingMore()
-	// Add newErrs to the end of errs.
-	// You could add newErrs to the beginning of errs
-	// using errs.Stack(newErrs).
-	errs.Append(newErrs)
-	log.Printf("errs.Level: %s", errs.Level)
-	// errs.Level: fatal
+	// The Level of the Errors object will be the highest level error in the list.
+	fmt.Printf("errs.Level: %s\n", errs.Level)
+	// Output: errs.Level: error
 
-	// Check to see if we have added any errors to errs.Errors.
-	// Return a count of errors and true if any exists.
-	// This check does not care about the Level of Error in Errors,
-	// only they 1 or more Error exists.
-	if i, hasErrors := errs.Check(); hasErrors {
-		log.Printf("errs contains %d errors", i)
+	fmt.Println(errs.Pretty())
+	/* Output:
+	{
+	  "errors": [
+	    {
+	      "time": "2024-07-18T13:09:25.355507403-04:00",
+	      "level": "error",
+	      "message": "simple error message"
+	    },
+	    {
+	      "time": "2024-07-18T13:09:25.355507652-04:00",
+	      "level": "warn",
+	      "message": "error message with metadata",
+	      "metadata": {
+	        "key1": "value1",
+	        "key2": "value2"
+	      }
+	    },
+	  ],
+	  "level": "fatal"
 	}
-	// Output:
-	// errs contains 4 errors
+	*/
 
-	// Check to see if errs.Level >= ERROR
+	// Create a second Errors object with different errors.
+	errs2 := jerrors.New()
+	err3 := jerrors.NewError(jerrors.FATAL, "fatal error message", "key1", "value1")
+	err4 := jerrors.NewError(jerrors.DEBUG, "debug error message", "key1", "value1", "key2", "value2", "key3", "value3")
+	errs2.Add(err3)
+	errs2.Add(err4)
+
+	fmt.Printf("errs.Level: %s\n", errs2.Level)
+	// Output: errs.Level: fatal
+
+	// Combine the two error lists.
+	errs.Append(errs2)
+
+	// Does errs contain any error with a Level of ERROR or higher?
 	if errs.IsError() {
-		log.Println("errs contains at least one error of ERROR Level or higher")
-	}
-	// Output:
-	// errs contains at least one error of ERROR Level or higher
-
-	// Get the last Error added to errs.Errors.
-	// You could use errs.First() to get the first error.
-	err = errs.Last()
-	log.Printf("we have user %s to blame\n\n", err.Metadata["username"])
-	// Output:
-	// we have user sally to blame
-
-	// Avoid the FATAL check below
-	errs.SetLevel(jerrors.ERROR)
-
-	// Check to see if errs.Level == FATAL
-	if errs.IsFatal() {
-		// Logs all errors in errs.Errors and exits 1
-		errs.Fatal("fatal error detected\n")
-		// Output:
-		// fatal error detected
-		// {"time":"2024-03-29T15:26:10.914361963-04:00","level":"debug","message":"first test error","metadata":{"order":"1","username":"billy"}}
-		// {"time":"2024-03-29T15:26:10.914534246-04:00","level":"error","message":"second test error","metadata":{"order":"2","value":"100"}}
-		// {"time":"2024-03-29T15:26:10.914568189-04:00","level":"warn","message":"another test error","metadata":{"app":"test_app","env":"prod","order":"3","username":"sally"}}
-		// {"time":"2024-03-29T15:26:10.914569953-04:00","level":"fatal","message":"something went very wrong","metadata":{"app":"test_app","env":"prod","order":"4","username":"sally"}}
-		// exit status 1
+		fmt.Println("errs contains at least one error with a level of error or higher\n")
 	}
 
-	// Clears errs by replacing it with a new empty Errors object.
-	errs.Clear()
-	log.Printf("errs.Level: %s", errs.Level)
-	// Output:
-	// errs.Level:
+	// Append() updates the level to the highest error level in both lists.
+	fmt.Printf("errs.Level: %s\n", errs.Level)
+	// Output: errs.Level: fatal
+
+	// Normal marshal functionality.
+	j, err := json.Marshal(errs)
+	if err != nil {
+		log.Fatalf("error marshalling errors: %s", err)
+	}
+	SendToClient(j)
+
+	// Set log to write to stdout instead of stderr. You can pass any io.Writer like bytes.Buffer as well.
+	jerrors.SetLogOutput(os.Stdout)
+
+	// Log to stdout.
+	errs.Log()
+	/* Output:
+	{"time":"2024-07-18T13:09:25.355507403-04:00","level":"error","message":"simple error message"}
+	{"time":"2024-07-18T13:09:25.355507652-04:00","level":"warn","message":"error message with metadata","metadata":{"key1":"value1","key2":"value2"}}
+	{"time":"2024-07-18T13:09:25.355552851-04:00","level":"fatal","message":"fatal error message","metadata":{"key1":"value1"}}
+	{"time":"2024-07-18T13:09:25.355554016-04:00","level":"debug","message":"debug error message","metadata":{"key1":"value1","key2":"value2","key3":"value3"}}
+	*/
 }
-
-```
-Output:
-```
-errs.Level: debug
-{"time":"2024-04-06T09:57:47.348761914-04:00","level":"debug","message":"first test error","metadata":{"order":"1","username":"billy"}}
-
-errs.Level: error
-{"time":"2024-04-06T09:57:47.348761914-04:00","level":"debug","message":"first test error","metadata":{"order":"1","username":"billy"}}
-{"time":"2024-04-06T09:57:47.348906765-04:00","level":"error","message":"second test error","metadata":{"order":"2","value":"100"}}
-
-errs.Level: fatal
-errs contains 4 errors
-errs contains at least one error of ERROR Level or higher
-we have user sally to blame
-
-errs.Level:
 ```
 
 ## Error
@@ -217,26 +171,6 @@ Output:
 ```
 {"time":"2024-04-06T12:50:32.674656319-04:00","level":"error","message":"simple error message"}
 {"time":"2024-04-06T12:50:32.674788908-04:00","level":"error","message":"this error has metadata key pairs","metadata":{"key":"pairs","my":"meta","sev":"4"}}
-```
-
-Formatted error messages.
-```go
-err := ReturnsAnError()
-jerr := jerrors.NewError(jerrors.ERROR, fmt.Sprintf("error: %v", e))
-```
-
-### Error To string
-jerrors.Error implements the Golang Error and String interfaces.
-```go
-err := jerrors.NewError(jerrors.ERROR, "simple error message")
-jsonString := err.Error()
-fmt.Printf("json string: %s", jsonString)
-fmt.Printf("error returned: %s", err.String())
-```
-Output:
-```
-json string: {"time":"2024-04-06T14:15:37.150702523-04:00","level":"error","message":"simple error message"}
-error returned: {"time":"2024-04-06T14:15:37.150702523-04:00","level":"error","message":"simple error message"}
 ```
 
 ### Accessing Metadata
@@ -331,33 +265,6 @@ Levels string representation.
 	FATAL: "fatal",
 ```
 
-### Level Functions
-```go
-
-// StringToLevel returns the matched Level. "debug" = DEBUG
-// level arg is NOT case sensitive. No match returns 0.
-func StringToLevel(level string) Level
-
-// String converts Level to a lowercase string. DEBUG = "debug", etc.
-// Returns empty string if Level is 0.
-func (l Level) String() string
-
-// NotDebug returns true for all Levels except DEBUG.
-func (l Level) NotDebug() bool
-
-// IsError returns true if Level is ERROR or FATAL.
-func (l Level) IsError() bool
-
-// IsFatal returns true if Level is FATAL.
-func (l Level) IsFatal() bool
-
-// MarshalJSON converts Level to json.
-func (l Level) MarshalJSON() ([]byte, error)
-
-// UnmarshalJSON converts json to a Level.
-func (l *Level) UnmarshalJSON(b []byte) error
-```
-
 ## Errors
 ```go
 type Errors struct {
@@ -441,7 +348,7 @@ iferrs.IsFatal() {
 
 ### Errors Manipulation
 
-#### Append Errorss
+#### Append Errors
 You can append a new Errors to and existing List. Append works just like array Append adding the argument list to the bottom of the list calling the method.
 ```go
 var l jerrors.Errors
