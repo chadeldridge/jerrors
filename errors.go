@@ -206,6 +206,16 @@ func (e *Errors) UnmarshalJSON(b []byte) error {
 }
 */
 
+func (e *Errors) Pretty() string {
+	// msgs := e.toArray(false)
+	j, err := json.MarshalIndent(e, "", "  ")
+	if err != nil {
+		return ""
+	}
+
+	return string(j)
+}
+
 // ToArray returns an array of all marshalled errors in List.
 func (e *Errors) ToArray() []string {
 	var a []string
